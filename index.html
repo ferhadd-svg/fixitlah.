@@ -65,6 +65,18 @@
     </div>
   </div>
 
+  <!-- ============ PROFILE MODAL ============ -->
+  <div class="modal" id="profileModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__panel modal__panel--wide" role="dialog" aria-modal="true" aria-labelledby="profileName">
+      <button class="modal__x modal__x--float" data-close aria-label="Close">✕</button>
+      <div id="profileBody"><!-- filled on open --></div>
+      <div class="profile__cta">
+        <button class="btn btn--primary btn--block" id="profileBook">Book</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ BOOKING MODAL ============ -->
   <div class="modal" id="bookModal" hidden>
     <div class="modal__backdrop" data-close></div>
@@ -86,8 +98,12 @@
         <label>Tell us a bit about the problem
           <textarea id="bookNote" rows="3" placeholder="e.g. Bedroom aircon hasn't been cold for 2 weeks" required></textarea>
         </label>
+        <div class="guarantee">
+          <span class="guarantee__ico">🛡️</span>
+          <span><b>Protected by the kerjakita Guarantee.</b> Pay in-app — your money is held until the job is done and you're happy, with a 30-day workmanship warranty.</span>
+        </div>
         <button type="submit" class="btn btn--primary btn--block">Send request</button>
-        <p class="book__fine">The pro will WhatsApp you to confirm. (Demo — no real message is sent.)</p>
+        <p class="book__fine">Chat &amp; confirm in-app. (Demo — no real message is sent.)</p>
       </form>
     </div>
   </div>

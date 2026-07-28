@@ -20,6 +20,49 @@ function initials(name) {
 }
 function catById(id) { return CATEGORIES.find(c => c.id === id); }
 
+// ---------- Deterministic "past jobs" generator ----------
+// Seeded so each pro's history is stable between renders.
+function seededRng(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return function () {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  };
+}
+
+const WHENS = ["3 days ago", "1 week ago", "2 weeks ago", "3 weeks ago", "1 month ago", "2 months ago"];
+
+function proStats(t) {
+  const rng = seededRng(t.id + "stats");
+  const onTime = Math.min(99, Math.round(90 + (t.rating - 4.5) * 16 + rng() * 3));
+  const repeat = Math.round(52 + (t.rating - 4.5) * 30 + rng() * 18);
+  return { jobs: t.jobs, onTime, repeat: Math.min(88, repeat), since: t.since };
+}
+
+function proJobs(t) {
+  const rng = seededRng(t.id + "jobs");
+  const cat = catById(t.service);
+  const count = 4 + Math.floor(rng() * 2); // 4–5
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const five = rng() < 0.5 + (t.rating - 4.5) * 0.7; // higher rating → more 5★
+    const stars = five ? 5 : 4;
+    const pool = five ? REVIEW_POOL.positive : REVIEW_POOL.good;
+    const text = pool[Math.floor(rng() * pool.length)];
+    const author = REVIEW_POOL.authors[Math.floor(rng() * REVIEW_POOL.authors.length)];
+    out.push({ stars, text, author, when: WHENS[i] || "a while ago", job: cat.label });
+  }
+  return out;
+}
+
+let currentProfileId = null;
+
 // Haversine distance in km — the heart of the 5 km matching.
 function distanceKm(a, b) {
   const R = 6371;
@@ -64,7 +107,7 @@ function tukangRow(t) {
   const cat = catById(t.service);
   const distTxt = t.dist < 1 ? `${Math.round(t.dist * 1000)} m` : `${t.dist.toFixed(1)} km`;
   return `
-  <div class="trow">
+  <div class="trow" data-id="${t.id}" role="button" tabindex="0">
     <div class="tavatar">${initials(t.name)}</div>
     <div class="tinfo">
       <div class="tname">${t.name}${t.verified ? ' <span class="tick" title="Verified">✔</span>' : ""}</div>
@@ -99,8 +142,16 @@ function renderResults() {
   empty.hidden = true;
   const visible = list.slice(0, state.shown);
   listEl.innerHTML = visible.map(tukangRow).join("");
+
+  // Whole row opens the profile; the Book button books directly.
+  listEl.querySelectorAll(".trow").forEach(row => {
+    row.addEventListener("click", () => openProfile(row.dataset.id));
+    row.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProfile(row.dataset.id); }
+    });
+  });
   listEl.querySelectorAll("[data-book]").forEach(b =>
-    b.addEventListener("click", () => openBooking(b.dataset.book)));
+    b.addEventListener("click", e => { e.stopPropagation(); openBooking(b.dataset.book); }));
 
   const remaining = list.length - visible.length;
   showmoreWrap.hidden = remaining <= 0;
@@ -132,6 +183,67 @@ function renderAreaList() {
   });
 }
 
+// ---------- Profile modal ----------
+function openProfile(tukangId) {
+  const t = TUKANG.find(x => x.id === tukangId);
+  const cat = catById(t.service);
+  const s = proStats(t);
+  const jobs = proJobs(t);
+  currentProfileId = tukangId;
+
+  const jobsHtml = jobs.map(j => `
+    <div class="job">
+      <div class="job__top">
+        <span class="job__stars">${"★".repeat(j.stars)}${"☆".repeat(5 - j.stars)}</span>
+        <span class="job__when">${j.when}</span>
+      </div>
+      <p class="job__text">“${j.text}”</p>
+      <div class="job__meta"><b>${j.author}</b> · ${j.job}</div>
+    </div>`).join("");
+
+  $("#profileBody").innerHTML = `
+    <div class="profile__head">
+      <div class="profile__top">
+        <div class="profile__avatar">${initials(t.name)}</div>
+        <div>
+          <div class="profile__name">${t.name}${t.verified ? ' <span class="tick" title="Verified">✔</span>' : ""}</div>
+          <div class="profile__svc">${cat.emoji} ${cat.label} · ${t.area}</div>
+        </div>
+      </div>
+      <div class="profile__rate">
+        <span><span class="profile__star">★</span> <b>${t.rating.toFixed(1)}</b> (${t.reviews} reviews)</span>
+        <span><b>${t.jobs}</b> jobs done</span>
+        <span>Responds <b>${t.respondsIn}</b></span>
+        <span>From <b>RM${t.priceFrom}</b></span>
+      </div>
+    </div>
+
+    <div class="trustrow">
+      <span class="trustbadge">🛡️ Payment protected</span>
+      <span class="trustbadge">✅ 30-day guarantee</span>
+      ${t.verified ? '<span class="trustbadge">🪪 ID verified</span>' : ""}
+      <span class="trustbadge">📅 Member since ${s.since}</span>
+    </div>
+
+    <div class="profile__section">
+      <h4>About</h4>
+      <p class="profile__about">${t.blurb}</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b>${s.jobs}</b><span>Jobs done</span></div>
+      <div class="stat"><b>${s.onTime}%</b><span>On time</span></div>
+      <div class="stat"><b>${t.rating.toFixed(1)}</b><span>Rating</span></div>
+      <div class="stat"><b>${s.repeat}%</b><span>Repeat clients</span></div>
+    </div>
+
+    <div class="profile__section"><h4>Recent jobs & reviews</h4></div>
+    <div class="jobs">${jobsHtml}</div>`;
+
+  $("#profileBook").textContent = `Book ${t.name.split(" ")[0]} · from RM${t.priceFrom}`;
+  openModal("#profileModal");
+}
+
 // ---------- Booking modal ----------
 function openBooking(tukangId) {
   const t = TUKANG.find(x => x.id === tukangId);
@@ -146,6 +258,9 @@ function openBooking(tukangId) {
 // ---------- Modal / toast helpers ----------
 function openModal(sel) { $(sel).hidden = false; document.body.style.overflow = "hidden"; }
 function closeModal(sel) { $(sel).hidden = true; document.body.style.overflow = ""; }
+function closeAllModals() {
+  ["#locModal", "#bookModal", "#profileModal"].forEach(closeModal);
+}
 
 let toastTimer;
 function toast(msg) {
@@ -190,6 +305,12 @@ function init() {
 
   $("#showmoreBtn").addEventListener("click", () => { state.shown += PAGE_SIZE; renderResults(); });
 
+  // Book from the profile → close profile, open booking for the same pro.
+  $("#profileBook").addEventListener("click", () => {
+    closeModal("#profileModal");
+    if (currentProfileId) openBooking(currentProfileId);
+  });
+
   $("#emptyExpand").addEventListener("click", () => {
     state.radiusKm = Math.min(20, state.radiusKm + 5);
     state.shown = PAGE_SIZE;
@@ -205,9 +326,9 @@ function init() {
   });
 
   document.querySelectorAll("[data-close]").forEach(el =>
-    el.addEventListener("click", () => { closeModal("#locModal"); closeModal("#bookModal"); }));
+    el.addEventListener("click", () => { closeAllModals(); }));
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") { closeModal("#locModal"); closeModal("#bookModal"); }
+    if (e.key === "Escape") closeAllModals();
   });
 }
 
