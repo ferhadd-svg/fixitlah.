@@ -7,7 +7,7 @@ services:
   - type: web
     name: kerjakita
     runtime: static
-    branch: claude/malaysian-services-marketplace-7djlbq
+    branch: main
     buildCommand: "echo 'no build step — static files served as-is'"
     staticPublishPath: .
     pullRequestPreviewsEnabled: false
