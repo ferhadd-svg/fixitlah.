@@ -1,0 +1,22 @@
+# Render blueprint — deploys kerjakita as a static site.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# The site is plain HTML/CSS/JS at the repo root, so there is no build step.
+# On Render: New + -> Blueprint -> pick this repo -> Apply.
+services:
+  - type: web
+    name: kerjakita
+    runtime: static
+    branch: main
+    buildCommand: "echo 'no build step — static files served as-is'"
+    staticPublishPath: .
+    pullRequestPreviewsEnabled: false
+    # Send unknown paths to index.html (single-page app fallback).
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
