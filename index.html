@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>fixitlah. — Cari tukang dekat kawasan you</title>
-  <meta name="description" content="fixitlah. — book verified tukang (aircond, paip, wireman, mekanik & more) within 5 km of your kawasan. Support local, cepat sampai." />
+  <title>kerjakita — tukang berdekatan, dalam 5 km</title>
+  <meta name="description" content="kerjakita — pilih servis, kami carikan tukang dalam 5 km dari kawasan you. Aircond, paip, wireman, mekanik & lagi." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -12,157 +12,55 @@
   <!-- ============ TOP BAR ============ -->
   <header class="topbar">
     <div class="wrap topbar__inner">
-      <a class="brand" href="#" aria-label="fixitlah home">
-        <span class="brand__logo">🛠️</span>
-        <span class="brand__name">fixitlah<span class="brand__dot">.</span></span>
-      </a>
-
+      <span class="brand">kerjakita</span>
       <button class="locpill" id="locBtn" aria-haspopup="dialog">
         <span class="locpill__ico">📍</span>
-        <span class="locpill__text">
-          <span class="locpill__label">Kawasan you</span>
-          <span class="locpill__area" id="locArea">Bukit Rimau</span>
-        </span>
+        <span class="locpill__area" id="locArea">Bukit Rimau</span>
         <span class="locpill__chev">▾</span>
       </button>
     </div>
   </header>
 
-  <!-- ============ HERO ============ -->
-  <section class="hero">
-    <div class="wrap hero__inner">
-      <div class="hero__copy">
-        <h1 class="hero__title">Cari tukang dekat<br/>kawasan you. <span class="hero__wave">Senang je.</span></h1>
-        <p class="hero__sub">
-          Match dengan tukang dalam <strong id="heroRadius">5 km</strong> je — cepat sampai, support local.
-        </p>
-        <div class="hero__search">
-          <input id="searchInput" type="text" placeholder="Cari servis… cth: aircond, paip, mekanik" autocomplete="off" />
-          <button id="searchClear" class="hero__searchclear" aria-label="Clear" hidden>✕</button>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- ============ BOOKING (the landing) ============ -->
+  <main class="wrap book">
+    <h1 class="book__title">Apa nak baiki hari ni?</h1>
+    <p class="book__sub">Pilih servis — kami tunjuk tukang dalam <b>5 km</b> dari <span id="subArea">Bukit Rimau</span>.</p>
 
-  <!-- ============ CATEGORY CHIPS ============ -->
-  <nav class="cats" aria-label="Service categories">
-    <div class="wrap">
-      <div class="cats__scroll" id="catScroll"><!-- chips injected --></div>
-    </div>
-  </nav>
+    <div class="services" id="services"><!-- service buttons injected --></div>
 
-  <!-- ============ RESULTS ============ -->
-  <main class="wrap results">
-    <div class="results__head">
-      <div>
-        <h2 class="results__title" id="resultsTitle">Tukang dekat you</h2>
-        <p class="results__sub" id="resultsSub">17 tukang dalam 5 km</p>
-      </div>
-      <div class="results__radius">
-        <label for="radius">Radius: <b id="radiusVal">5 km</b></label>
-        <input type="range" id="radius" min="1" max="20" step="1" value="5" />
-      </div>
+    <div class="results__bar">
+      <span class="results__count" id="resultsCount">Tukang berdekatan</span>
     </div>
 
-    <div class="grid" id="grid"><!-- cards injected --></div>
+    <div class="list" id="list"><!-- tukang rows injected --></div>
 
     <div class="showmore" id="showmoreWrap" hidden>
-      <button class="btn btn--ghost" id="showmoreBtn">Tunjuk lagi</button>
+      <button class="btn btn--soft" id="showmoreBtn">Tunjuk lagi</button>
     </div>
 
     <div class="empty" id="empty" hidden>
-      <div class="empty__emoji">🫤</div>
-      <h3>Alamak, takde tukang dalam <span id="emptyRadius">5 km</span></h3>
-      <p>Kawasan you memang senyap sikit. Cuba besarkan radius atau tukar servis.</p>
-      <button class="btn btn--primary" id="emptyExpand">Besarkan ke 10 km</button>
+      <p class="empty__title">Takde tukang dalam <span id="emptyRadius">5 km</span></p>
+      <p class="empty__sub">Kawasan you senyap sikit. Cuba besarkan kawasan carian.</p>
+      <button class="btn btn--primary" id="emptyExpand">Cari dalam 10 km</button>
     </div>
   </main>
 
-  <!-- ============ WHY SMALL RADIUS ============ -->
-  <section class="why">
-    <div class="wrap why__inner">
-      <h2 class="why__title">Kenapa <span class="txt-accent">5 km je</span>?</h2>
-      <div class="why__grid">
-        <div class="why__card">
-          <div class="why__ico">⚡</div>
-          <h3>Cepat sampai</h3>
-          <p>Tukang duduk sekampung dengan you. Tak payah tunggu orang drive sejam dari KL.</p>
-        </div>
-        <div class="why__card">
-          <div class="why__ico">🤝</div>
-          <h3>Support local</h3>
-          <p>Duit stay dalam kawasan. You tolong jiran sebelah cari rezeki, dia tolong baiki rumah you.</p>
-        </div>
-        <div class="why__card">
-          <div class="why__ico">🎯</div>
-          <h3>Kurang lauk-lauk</h3>
-          <p>Sebab radius kecik, tukang tak lawan seluruh Selangor. Job lagi fair, harga pun elok.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ BECOME A TUKANG ============ -->
-  <section class="join" id="join">
-    <div class="wrap join__inner">
-      <div class="join__copy">
-        <span class="join__eyebrow">Untuk tukang & freelancer</span>
-        <h2>Ada skill? Jadi tukang <span class="brand__name">fixitlah<span class="brand__dot">.</span></span></h2>
-        <p>
-          Daftar sekali, dapat job <strong>dalam 5 km dari base you</strong> je — tak yah drive
-          merata-rata. You set kawasan, kami hantar customer yang betul-betul dekat.
-        </p>
-        <ul class="join__list">
-          <li>✅ Job auto-match ikut kawasan you</li>
-          <li>✅ Customer dah verified, bayar dalam app</li>
-          <li>✅ Rating &amp; badge — makin banyak job, makin naik</li>
-        </ul>
-        <button class="btn btn--dark" id="joinBtn">Daftar jadi tukang</button>
-      </div>
-      <div class="join__card">
-        <div class="join__cardhead">
-          <span class="join__avatar">AF</span>
-          <div>
-            <b>Ahmad Faizal</b>
-            <span class="join__meta">Aircond • Kota Kemuning</span>
-          </div>
-          <span class="badge badge--verified">✔ Verified</span>
-        </div>
-        <div class="join__zone">
-          <span class="join__zonedot"></span>
-          Zon kerja: <b>5 km dari Kota Kemuning</b>
-        </div>
-        <div class="join__earn">
-          <span>Minggu ni</span>
-          <b>RM 1,240</b>
-          <span class="join__earnsub">18 job • semua dalam kawasan</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ FOOTER ============ -->
   <footer class="foot">
-    <div class="wrap foot__inner">
-      <div class="foot__brand">
-        <span class="brand__name">fixitlah<span class="brand__dot">.</span></span>
-        <p>Cari tukang, senang. Kawasan you, tukang you.</p>
-      </div>
-      <p class="foot__note">Prototype demo — semua tukang & harga adalah contoh sahaja. Made in Malaysia 🇲🇾</p>
+    <div class="wrap">
+      <span class="foot__brand">kerjakita</span>
+      <span class="foot__note">Tukang berdekatan, dalam 5 km. Prototype demo — tukang & harga contoh sahaja. 🇲🇾</span>
     </div>
   </footer>
 
   <!-- ============ LOCATION MODAL ============ -->
   <div class="modal" id="locModal" hidden>
     <div class="modal__backdrop" data-close></div>
-    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="locModalTitle">
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="locTitle">
       <div class="modal__head">
-        <h3 id="locModalTitle">Pilih kawasan you</h3>
+        <h3 id="locTitle">Kawasan you</h3>
         <button class="modal__x" data-close aria-label="Tutup">✕</button>
       </div>
-      <button class="gps" id="gpsBtn">
-        <span>🛰️</span> Guna lokasi GPS saya
-      </button>
+      <button class="gps" id="gpsBtn"><span>🛰️</span> Guna lokasi GPS saya</button>
       <div class="arealist" id="areaList"><!-- areas injected --></div>
     </div>
   </div>
@@ -179,22 +77,21 @@
       <form id="bookForm" class="book__form">
         <label>Bila you nak?
           <select id="bookWhen" required>
-            <option value="Sekarang boleh?">Secepat mungkin (ASAP)</option>
+            <option value="ASAP">Secepat mungkin (ASAP)</option>
             <option value="Hari ni petang">Hari ni, petang</option>
             <option value="Esok pagi">Esok, pagi</option>
             <option value="Hujung minggu">Hujung minggu</option>
           </select>
         </label>
         <label>Cerita sikit masalah you
-          <textarea id="bookNote" rows="3" placeholder="cth: Aircond bilik tidur bunyi & tak sejuk dah 2 minggu" required></textarea>
+          <textarea id="bookNote" rows="3" placeholder="cth: Aircond bilik tak sejuk dah 2 minggu" required></textarea>
         </label>
-        <button type="submit" class="btn btn--primary btn--block">Hantar request 📩</button>
-        <p class="book__fineprint">Tukang akan WhatsApp you untuk confirm. (Demo — takde message betul dihantar.)</p>
+        <button type="submit" class="btn btn--primary btn--block">Hantar request</button>
+        <p class="book__fine">Tukang akan WhatsApp you untuk confirm. (Demo — takde message betul dihantar.)</p>
       </form>
     </div>
   </div>
 
-  <!-- ============ TOAST ============ -->
   <div class="toast" id="toast" hidden></div>
 
   <script src="data.js"></script>

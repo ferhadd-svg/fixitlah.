@@ -1,180 +1,134 @@
 /* ============================================================
-   fixitlah.  —  app logic
-   Vanilla JS, no framework. State + render + the 5 km matching.
+   kerjakita  —  app logic
+   Booking-first. Pick a service, see tukang within 5 km, book.
    ============================================================ */
 
-// ---------- State ----------
-const PAGE_SIZE = 6;         // cards shown before "Tunjuk lagi"
+const PAGE_SIZE = 6;
 
 const state = {
-  location: AREAS[0],        // default: Bukit Rimau
+  location: AREAS[0],   // default: Bukit Rimau
   radiusKm: 5,
-  category: null,            // null = all
-  query: "",
-  shown: PAGE_SIZE,          // how many cards currently visible
+  category: null,       // null = Semua
+  shown: PAGE_SIZE,
 };
 
-// Consistent avatar colours from a name.
-const AVATAR_COLORS = ["#12a594", "#ff8a3d", "#0b6b62", "#f2701f", "#2d8f7a", "#e0651a", "#1e7d84"];
-function colorFor(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
+const $ = sel => document.querySelector(sel);
+
+// ---------- Helpers ----------
 function initials(name) {
   return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
 }
 function catById(id) { return CATEGORIES.find(c => c.id === id); }
 
-// ---------- The core: Haversine distance (km) ----------
+// Haversine distance in km — the heart of the 5 km matching.
 function distanceKm(a, b) {
-  const R = 6371; // earth radius km
+  const R = 6371;
   const dLat = (b.lat - a.lat) * Math.PI / 180;
   const dLng = (b.lng - a.lng) * Math.PI / 180;
-  const la1 = a.lat * Math.PI / 180;
-  const la2 = b.lat * Math.PI / 180;
+  const la1 = a.lat * Math.PI / 180, la2 = b.lat * Math.PI / 180;
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-// ---------- Matching: who is within the radius ----------
 function matchedTukang() {
   const here = state.location;
   return TUKANG
     .map(t => ({ ...t, dist: distanceKm(here, t) }))
     .filter(t => t.dist <= state.radiusKm)
     .filter(t => !state.category || t.service === state.category)
-    .filter(t => {
-      if (!state.query) return true;
-      const q = state.query.toLowerCase();
-      const cat = catById(t.service);
-      return (
-        t.name.toLowerCase().includes(q) ||
-        t.blurb.toLowerCase().includes(q) ||
-        (cat && (cat.label.toLowerCase().includes(q) || cat.tagline.toLowerCase().includes(q))) ||
-        t.service.toLowerCase().includes(q)
-      );
-    })
     .sort((a, b) => a.dist - b.dist);
 }
 
-// ---------- Renderers ----------
-const $ = sel => document.querySelector(sel);
-
-function renderCats() {
-  const scroll = $("#catScroll");
-  const all = `<button class="chip ${!state.category ? "is-active" : ""}" data-cat="">
-      <span class="chip__emoji">🧰</span> Semua</button>`;
-  const chips = CATEGORIES.map(c => `
-    <button class="chip ${state.category === c.id ? "is-active" : ""}" data-cat="${c.id}">
-      <span class="chip__emoji">${c.emoji}</span> ${c.label}
+// ---------- Service picker ----------
+function renderServices() {
+  const wrap = $("#services");
+  const all = `<button class="svc ${!state.category ? "is-active" : ""}" data-cat="">
+      <span class="svc__emoji">🧰</span> Semua</button>`;
+  const rest = CATEGORIES.map(c => `
+    <button class="svc ${state.category === c.id ? "is-active" : ""}" data-cat="${c.id}">
+      <span class="svc__emoji">${c.emoji}</span> ${c.label}
     </button>`).join("");
-  scroll.innerHTML = all + chips;
-  scroll.querySelectorAll(".chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-      state.category = chip.dataset.cat || null;
-      resetPaging();
-      renderCats();
+  wrap.innerHTML = all + rest;
+  wrap.querySelectorAll(".svc").forEach(b => {
+    b.addEventListener("click", () => {
+      state.category = b.dataset.cat || null;
+      state.shown = PAGE_SIZE;
+      renderServices();
       renderResults();
     });
   });
 }
 
-function tukangCard(t) {
+// ---------- Tukang rows ----------
+function tukangRow(t) {
   const cat = catById(t.service);
   const distTxt = t.dist < 1 ? `${Math.round(t.dist * 1000)} m` : `${t.dist.toFixed(1)} km`;
   return `
-  <article class="card">
-    <div class="card__top">
-      <div class="card__avatar" style="background:${colorFor(t.name)}">${initials(t.name)}</div>
-      <div class="card__id">
-        <div class="card__name">${t.name}${t.verified ? ' <span class="tick" title="Verified">✔</span>' : ""}</div>
-        <div class="card__svc">${cat.emoji} ${cat.label} • ${t.area}</div>
-      </div>
-      <div class="card__dist">${distTxt}<small>dari you</small></div>
+  <div class="trow">
+    <div class="tavatar">${initials(t.name)}</div>
+    <div class="tinfo">
+      <div class="tname">${t.name}${t.verified ? ' <span class="tick" title="Verified">✔</span>' : ""}</div>
+      <div class="tsub">${cat.emoji} ${cat.label} · ${t.area} · ${distTxt} · ★ ${t.rating.toFixed(1)}</div>
     </div>
-    <p class="card__blurb">${t.blurb}</p>
-    <div class="card__meta">
-      <span class="card__rating">★ ${t.rating.toFixed(1)} <span>(${t.reviews})</span></span>
-      <span class="card__price">dari <b>RM${t.priceFrom}</b></span>
+    <div class="tmeta">
+      <div class="tprice">dari<b>RM${t.priceFrom}</b></div>
+      <button class="btn btn--primary" data-book="${t.id}">Book</button>
     </div>
-    <div class="card__actions">
-      <button class="btn btn--ghost" data-book="${t.id}">Book</button>
-      <button class="btn btn--primary" data-wa="${t.id}">WhatsApp</button>
-    </div>
-  </article>`;
+  </div>`;
 }
 
 function renderResults() {
   const list = matchedTukang();
-  const grid = $("#grid");
+  const listEl = $("#list");
   const empty = $("#empty");
   const showmoreWrap = $("#showmoreWrap");
-
-  // Title reflects the active filter.
   const cat = state.category ? catById(state.category) : null;
-  $("#resultsTitle").textContent = cat
-    ? `${cat.label} dekat you`
-    : "Tukang dekat you";
+
+  $("#locArea").textContent = state.location.name;
+  $("#subArea").textContent = state.location.name;
 
   if (list.length === 0) {
-    grid.innerHTML = "";
-    grid.hidden = true;
+    listEl.innerHTML = "";
     showmoreWrap.hidden = true;
     empty.hidden = false;
-    $("#resultsSub").textContent = `Takde tukang dalam ${state.radiusKm} km`;
     $("#emptyRadius").textContent = `${state.radiusKm} km`;
-  } else {
-    grid.hidden = false;
-    empty.hidden = true;
-
-    const visible = list.slice(0, state.shown);
-    grid.innerHTML = visible.map(tukangCard).join("");
-    grid.querySelectorAll("[data-book]").forEach(b =>
-      b.addEventListener("click", () => openBooking(b.dataset.book)));
-    grid.querySelectorAll("[data-wa]").forEach(b =>
-      b.addEventListener("click", () => {
-        const t = TUKANG.find(x => x.id === b.dataset.wa);
-        toast(`📲 Opening WhatsApp with ${t.name}… (demo)`);
-      }));
-
-    // Show-more button only when there's more to reveal.
-    const remaining = list.length - visible.length;
-    showmoreWrap.hidden = remaining <= 0;
-    if (remaining > 0) $("#showmoreBtn").textContent = `Tunjuk lagi (${remaining})`;
-
-    // Subtitle: how many match in this radius.
-    const noun = cat ? cat.label.toLowerCase() : "tukang";
-    $("#resultsSub").textContent = `${list.length} ${noun} dalam ${state.radiusKm} km`;
+    $("#emptyExpand").textContent = `Cari dalam ${Math.min(20, state.radiusKm + 5)} km`;
+    $("#resultsCount").textContent = "Tiada tukang berdekatan";
+    return;
   }
 
-  // Sync the various counters / labels.
-  $("#radiusVal").textContent = `${state.radiusKm} km`;
-  $("#heroRadius").textContent = `${state.radiusKm} km`;
-  $("#locArea").textContent = state.location.name;
-}
+  empty.hidden = true;
+  const visible = list.slice(0, state.shown);
+  listEl.innerHTML = visible.map(tukangRow).join("");
+  listEl.querySelectorAll("[data-book]").forEach(b =>
+    b.addEventListener("click", () => openBooking(b.dataset.book)));
 
-// Any filter change collapses the list back to the first page.
-function resetPaging() { state.shown = PAGE_SIZE; }
+  const remaining = list.length - visible.length;
+  showmoreWrap.hidden = remaining <= 0;
+  if (remaining > 0) $("#showmoreBtn").textContent = `Tunjuk lagi (${remaining})`;
+
+  const noun = cat ? cat.label : "tukang";
+  $("#resultsCount").textContent = `${list.length} ${noun} dalam ${state.radiusKm} km`;
+}
 
 // ---------- Location modal ----------
 function renderAreaList() {
   const wrap = $("#areaList");
   wrap.innerHTML = AREAS.map(a => {
-    const d = distanceKm(state.location, a);
     const active = a.id === state.location.id;
+    const d = distanceKm(state.location, a);
     return `<button class="arealist__item ${active ? "is-active" : ""}" data-area="${a.id}">
       <span>${a.name}</span>
-      ${active ? "<small>📍 sekarang</small>" : `<small>${d < 0.1 ? "" : d.toFixed(1) + " km"}</small>`}
+      ${active ? "<small>📍 sekarang</small>" : `<small>${d.toFixed(1)} km</small>`}
     </button>`;
   }).join("");
   wrap.querySelectorAll(".arealist__item").forEach(item => {
     item.addEventListener("click", () => {
       state.location = AREAS.find(a => a.id === item.dataset.area);
-      resetPaging();
+      state.shown = PAGE_SIZE;
       closeModal("#locModal");
       renderResults();
-      toast(`📍 Kawasan tukar ke ${state.location.name}`);
+      toast(`📍 Kawasan: ${state.location.name}`);
     });
   });
 }
@@ -184,20 +138,16 @@ function openBooking(tukangId) {
   const t = TUKANG.find(x => x.id === tukangId);
   const cat = catById(t.service);
   $("#bookWho").innerHTML = `
-    <div class="card__avatar" style="background:${colorFor(t.name)}">${initials(t.name)}</div>
-    <div>
-      <b>${t.name}</b><br/>
-      <span class="join__meta">${cat.emoji} ${cat.label} • dari RM${t.priceFrom}</span>
-    </div>`;
+    <div class="tavatar">${initials(t.name)}</div>
+    <div><b>${t.name}</b><br/><span>${cat.emoji} ${cat.label} · dari RM${t.priceFrom}</span></div>`;
   $("#bookForm").dataset.tukang = tukangId;
   openModal("#bookModal");
 }
 
-// ---------- Modal helpers ----------
+// ---------- Modal / toast helpers ----------
 function openModal(sel) { $(sel).hidden = false; document.body.style.overflow = "hidden"; }
 function closeModal(sel) { $(sel).hidden = true; document.body.style.overflow = ""; }
 
-// ---------- Toast ----------
 let toastTimer;
 function toast(msg) {
   const el = $("#toast");
@@ -211,26 +161,22 @@ function toast(msg) {
   }, 2600);
 }
 
-// ---------- Wire up events ----------
+// ---------- Init ----------
 function init() {
-  renderCats();
+  renderServices();
   renderResults();
 
-  // Location pill -> open modal
   $("#locBtn").addEventListener("click", () => { renderAreaList(); openModal("#locModal"); });
 
-  // GPS button -> find nearest preset area to the real position
   $("#gpsBtn").addEventListener("click", () => {
     if (!navigator.geolocation) { toast("GPS tak support kat browser ni 😅"); return; }
     $("#gpsBtn").textContent = "🛰️ Mencari lokasi…";
     navigator.geolocation.getCurrentPosition(
       pos => {
         const me = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        const nearest = AREAS
-          .map(a => ({ a, d: distanceKm(me, a) }))
-          .sort((x, y) => x.d - y.d)[0];
+        const nearest = AREAS.map(a => ({ a, d: distanceKm(me, a) })).sort((x, y) => x.d - y.d)[0];
         state.location = nearest.a;
-        resetPaging();
+        state.shown = PAGE_SIZE;
         $("#gpsBtn").innerHTML = "<span>🛰️</span> Guna lokasi GPS saya";
         closeModal("#locModal");
         renderResults();
@@ -243,42 +189,14 @@ function init() {
     );
   });
 
-  // Radius slider
-  const radius = $("#radius");
-  radius.addEventListener("input", () => {
-    state.radiusKm = Number(radius.value);
-    resetPaging();
-    renderResults();
-  });
+  $("#showmoreBtn").addEventListener("click", () => { state.shown += PAGE_SIZE; renderResults(); });
 
-  // Search
-  const search = $("#searchInput");
-  const clear = $("#searchClear");
-  search.addEventListener("input", () => {
-    state.query = search.value.trim();
-    clear.hidden = !state.query;
-    resetPaging();
-    renderResults();
-  });
-  clear.addEventListener("click", () => {
-    search.value = ""; state.query = ""; clear.hidden = true; resetPaging(); search.focus(); renderResults();
-  });
-
-  // Show more
-  $("#showmoreBtn").addEventListener("click", () => {
-    state.shown += PAGE_SIZE;
-    renderResults();
-  });
-
-  // Empty-state expand
   $("#emptyExpand").addEventListener("click", () => {
-    state.radiusKm = Math.min(20, Math.max(10, state.radiusKm + 5));
-    radius.value = state.radiusKm;
-    resetPaging();
+    state.radiusKm = Math.min(20, state.radiusKm + 5);
+    state.shown = PAGE_SIZE;
     renderResults();
   });
 
-  // Booking submit
   $("#bookForm").addEventListener("submit", e => {
     e.preventDefault();
     const t = TUKANG.find(x => x.id === e.target.dataset.tukang);
@@ -287,10 +205,6 @@ function init() {
     toast(`✅ Request dihantar ke ${t.name}! Dia akan WhatsApp you sekejap lagi.`);
   });
 
-  // "Jadi tukang" buttons
-  $("#joinBtn").addEventListener("click", () => toast("🚧 Pendaftaran tukang coming soon lah!"));
-
-  // Close modals via backdrop / X / Esc
   document.querySelectorAll("[data-close]").forEach(el =>
     el.addEventListener("click", () => { closeModal("#locModal"); closeModal("#bookModal"); }));
   document.addEventListener("keydown", e => {
