@@ -4,11 +4,14 @@
    ============================================================ */
 
 // ---------- State ----------
+const PAGE_SIZE = 6;         // cards shown before "Tunjuk lagi"
+
 const state = {
   location: AREAS[0],        // default: Bukit Rimau
   radiusKm: 5,
   category: null,            // null = all
   query: "",
+  shown: PAGE_SIZE,          // how many cards currently visible
 };
 
 // Consistent avatar colours from a name.
@@ -55,11 +58,6 @@ function matchedTukang() {
     .sort((a, b) => a.dist - b.dist);
 }
 
-// Count of everything reachable (ignores category/search) — for the hero stat.
-function reachableCount() {
-  return TUKANG.filter(t => distanceKm(state.location, t) <= state.radiusKm).length;
-}
-
 // ---------- Renderers ----------
 const $ = sel => document.querySelector(sel);
 
@@ -75,6 +73,7 @@ function renderCats() {
   scroll.querySelectorAll(".chip").forEach(chip => {
     chip.addEventListener("click", () => {
       state.category = chip.dataset.cat || null;
+      resetPaging();
       renderCats();
       renderResults();
     });
@@ -89,7 +88,7 @@ function tukangCard(t) {
     <div class="card__top">
       <div class="card__avatar" style="background:${colorFor(t.name)}">${initials(t.name)}</div>
       <div class="card__id">
-        <div class="card__name">${t.name} ${t.verified ? '<span class="badge badge--verified">✔ Verified</span>' : ""}</div>
+        <div class="card__name">${t.name}${t.verified ? ' <span class="tick" title="Verified">✔</span>' : ""}</div>
         <div class="card__svc">${cat.emoji} ${cat.label} • ${t.area}</div>
       </div>
       <div class="card__dist">${distTxt}<small>dari you</small></div>
@@ -97,9 +96,7 @@ function tukangCard(t) {
     <p class="card__blurb">${t.blurb}</p>
     <div class="card__meta">
       <span class="card__rating">★ ${t.rating.toFixed(1)} <span>(${t.reviews})</span></span>
-      <span>• ${t.jobs} job siap</span>
-      <span class="card__price">• dari <b>RM${t.priceFrom}</b></span>
-      <span>• ${t.respondsIn}</span>
+      <span class="card__price">dari <b>RM${t.priceFrom}</b></span>
     </div>
     <div class="card__actions">
       <button class="btn btn--ghost" data-book="${t.id}">Book</button>
@@ -112,6 +109,7 @@ function renderResults() {
   const list = matchedTukang();
   const grid = $("#grid");
   const empty = $("#empty");
+  const showmoreWrap = $("#showmoreWrap");
 
   // Title reflects the active filter.
   const cat = state.category ? catById(state.category) : null;
@@ -122,12 +120,16 @@ function renderResults() {
   if (list.length === 0) {
     grid.innerHTML = "";
     grid.hidden = true;
+    showmoreWrap.hidden = true;
     empty.hidden = false;
+    $("#resultsSub").textContent = `Takde tukang dalam ${state.radiusKm} km`;
     $("#emptyRadius").textContent = `${state.radiusKm} km`;
   } else {
     grid.hidden = false;
     empty.hidden = true;
-    grid.innerHTML = list.map(tukangCard).join("");
+
+    const visible = list.slice(0, state.shown);
+    grid.innerHTML = visible.map(tukangCard).join("");
     grid.querySelectorAll("[data-book]").forEach(b =>
       b.addEventListener("click", () => openBooking(b.dataset.book)));
     grid.querySelectorAll("[data-wa]").forEach(b =>
@@ -135,15 +137,25 @@ function renderResults() {
         const t = TUKANG.find(x => x.id === b.dataset.wa);
         toast(`📲 Opening WhatsApp with ${t.name}… (demo)`);
       }));
+
+    // Show-more button only when there's more to reveal.
+    const remaining = list.length - visible.length;
+    showmoreWrap.hidden = remaining <= 0;
+    if (remaining > 0) $("#showmoreBtn").textContent = `Tunjuk lagi (${remaining})`;
+
+    // Subtitle: how many match in this radius.
+    const noun = cat ? cat.label.toLowerCase() : "tukang";
+    $("#resultsSub").textContent = `${list.length} ${noun} dalam ${state.radiusKm} km`;
   }
 
   // Sync the various counters / labels.
   $("#radiusVal").textContent = `${state.radiusKm} km`;
-  $("#statRadius").textContent = state.radiusKm;
   $("#heroRadius").textContent = `${state.radiusKm} km`;
-  $("#statTukang").textContent = reachableCount();
   $("#locArea").textContent = state.location.name;
 }
+
+// Any filter change collapses the list back to the first page.
+function resetPaging() { state.shown = PAGE_SIZE; }
 
 // ---------- Location modal ----------
 function renderAreaList() {
@@ -159,6 +171,7 @@ function renderAreaList() {
   wrap.querySelectorAll(".arealist__item").forEach(item => {
     item.addEventListener("click", () => {
       state.location = AREAS.find(a => a.id === item.dataset.area);
+      resetPaging();
       closeModal("#locModal");
       renderResults();
       toast(`📍 Kawasan tukar ke ${state.location.name}`);
@@ -217,6 +230,7 @@ function init() {
           .map(a => ({ a, d: distanceKm(me, a) }))
           .sort((x, y) => x.d - y.d)[0];
         state.location = nearest.a;
+        resetPaging();
         $("#gpsBtn").innerHTML = "<span>🛰️</span> Guna lokasi GPS saya";
         closeModal("#locModal");
         renderResults();
@@ -233,6 +247,7 @@ function init() {
   const radius = $("#radius");
   radius.addEventListener("input", () => {
     state.radiusKm = Number(radius.value);
+    resetPaging();
     renderResults();
   });
 
@@ -242,16 +257,24 @@ function init() {
   search.addEventListener("input", () => {
     state.query = search.value.trim();
     clear.hidden = !state.query;
+    resetPaging();
     renderResults();
   });
   clear.addEventListener("click", () => {
-    search.value = ""; state.query = ""; clear.hidden = true; search.focus(); renderResults();
+    search.value = ""; state.query = ""; clear.hidden = true; resetPaging(); search.focus(); renderResults();
+  });
+
+  // Show more
+  $("#showmoreBtn").addEventListener("click", () => {
+    state.shown += PAGE_SIZE;
+    renderResults();
   });
 
   // Empty-state expand
   $("#emptyExpand").addEventListener("click", () => {
     state.radiusKm = Math.min(20, Math.max(10, state.radiusKm + 5));
     radius.value = state.radiusKm;
+    resetPaging();
     renderResults();
   });
 

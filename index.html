@@ -32,23 +32,13 @@
   <section class="hero">
     <div class="wrap hero__inner">
       <div class="hero__copy">
-        <span class="hero__eyebrow">Rumah rosak? Kereta buat hal? 😮‍💨</span>
         <h1 class="hero__title">Cari tukang dekat<br/>kawasan you. <span class="hero__wave">Senang je.</span></h1>
         <p class="hero__sub">
-          Aircond tak sejuk, paip bocor, plug hangus, kereta tak start —
-          <strong>fixitlah.</strong> match you dengan tukang yang <em>betul-betul dekat</em>,
-          dalam lingkungan <strong id="heroRadius">5 km</strong> je. Support local, cepat sampai.
+          Match dengan tukang dalam <strong id="heroRadius">5 km</strong> je — cepat sampai, support local.
         </p>
         <div class="hero__search">
           <input id="searchInput" type="text" placeholder="Cari servis… cth: aircond, paip, mekanik" autocomplete="off" />
           <button id="searchClear" class="hero__searchclear" aria-label="Clear" hidden>✕</button>
-        </div>
-        <div class="hero__stats">
-          <span><b id="statTukang">0</b> tukang online</span>
-          <span class="dot">•</span>
-          <span><b id="statRadius">5</b> km radius</span>
-          <span class="dot">•</span>
-          <span>100% <b>kawasan you</b></span>
         </div>
       </div>
     </div>
@@ -64,7 +54,10 @@
   <!-- ============ RESULTS ============ -->
   <main class="wrap results">
     <div class="results__head">
-      <h2 class="results__title" id="resultsTitle">Tukang dekat you</h2>
+      <div>
+        <h2 class="results__title" id="resultsTitle">Tukang dekat you</h2>
+        <p class="results__sub" id="resultsSub">17 tukang dalam 5 km</p>
+      </div>
       <div class="results__radius">
         <label for="radius">Radius: <b id="radiusVal">5 km</b></label>
         <input type="range" id="radius" min="1" max="20" step="1" value="5" />
@@ -72,6 +65,10 @@
     </div>
 
     <div class="grid" id="grid"><!-- cards injected --></div>
+
+    <div class="showmore" id="showmoreWrap" hidden>
+      <button class="btn btn--ghost" id="showmoreBtn">Tunjuk lagi</button>
+    </div>
 
     <div class="empty" id="empty" hidden>
       <div class="empty__emoji">🫤</div>
