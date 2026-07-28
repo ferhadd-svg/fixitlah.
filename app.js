@@ -43,7 +43,7 @@ function matchedTukang() {
 function renderServices() {
   const wrap = $("#services");
   const all = `<button class="svc ${!state.category ? "is-active" : ""}" data-cat="">
-      <span class="svc__emoji">🧰</span> Semua</button>`;
+      <span class="svc__emoji">🧰</span> All</button>`;
   const rest = CATEGORIES.map(c => `
     <button class="svc ${state.category === c.id ? "is-active" : ""}" data-cat="${c.id}">
       <span class="svc__emoji">${c.emoji}</span> ${c.label}
@@ -71,7 +71,7 @@ function tukangRow(t) {
       <div class="tsub">${cat.emoji} ${cat.label} · ${t.area} · ${distTxt} · ★ ${t.rating.toFixed(1)}</div>
     </div>
     <div class="tmeta">
-      <div class="tprice">dari<b>RM${t.priceFrom}</b></div>
+      <div class="tprice">from<b>RM${t.priceFrom}</b></div>
       <button class="btn btn--primary" data-book="${t.id}">Book</button>
     </div>
   </div>`;
@@ -82,7 +82,6 @@ function renderResults() {
   const listEl = $("#list");
   const empty = $("#empty");
   const showmoreWrap = $("#showmoreWrap");
-  const cat = state.category ? catById(state.category) : null;
 
   $("#locArea").textContent = state.location.name;
   $("#subArea").textContent = state.location.name;
@@ -92,8 +91,8 @@ function renderResults() {
     showmoreWrap.hidden = true;
     empty.hidden = false;
     $("#emptyRadius").textContent = `${state.radiusKm} km`;
-    $("#emptyExpand").textContent = `Cari dalam ${Math.min(20, state.radiusKm + 5)} km`;
-    $("#resultsCount").textContent = "Tiada tukang berdekatan";
+    $("#emptyExpand").textContent = `Search within ${Math.min(20, state.radiusKm + 5)} km`;
+    $("#resultsCount").textContent = "No pros nearby";
     return;
   }
 
@@ -105,10 +104,10 @@ function renderResults() {
 
   const remaining = list.length - visible.length;
   showmoreWrap.hidden = remaining <= 0;
-  if (remaining > 0) $("#showmoreBtn").textContent = `Tunjuk lagi (${remaining})`;
+  if (remaining > 0) $("#showmoreBtn").textContent = `Show more (${remaining})`;
 
-  const noun = cat ? cat.label : "tukang";
-  $("#resultsCount").textContent = `${list.length} ${noun} dalam ${state.radiusKm} km`;
+  const s = list.length === 1 ? "" : "s";
+  $("#resultsCount").textContent = `${list.length} pro${s} within ${state.radiusKm} km`;
 }
 
 // ---------- Location modal ----------
@@ -119,7 +118,7 @@ function renderAreaList() {
     const d = distanceKm(state.location, a);
     return `<button class="arealist__item ${active ? "is-active" : ""}" data-area="${a.id}">
       <span>${a.name}</span>
-      ${active ? "<small>📍 sekarang</small>" : `<small>${d.toFixed(1)} km</small>`}
+      ${active ? "<small>📍 current</small>" : `<small>${d.toFixed(1)} km</small>`}
     </button>`;
   }).join("");
   wrap.querySelectorAll(".arealist__item").forEach(item => {
@@ -128,7 +127,7 @@ function renderAreaList() {
       state.shown = PAGE_SIZE;
       closeModal("#locModal");
       renderResults();
-      toast(`📍 Kawasan: ${state.location.name}`);
+      toast(`📍 Area: ${state.location.name}`);
     });
   });
 }
@@ -139,7 +138,7 @@ function openBooking(tukangId) {
   const cat = catById(t.service);
   $("#bookWho").innerHTML = `
     <div class="tavatar">${initials(t.name)}</div>
-    <div><b>${t.name}</b><br/><span>${cat.emoji} ${cat.label} · dari RM${t.priceFrom}</span></div>`;
+    <div><b>${t.name}</b><br/><span>${cat.emoji} ${cat.label} · from RM${t.priceFrom}</span></div>`;
   $("#bookForm").dataset.tukang = tukangId;
   openModal("#bookModal");
 }
@@ -169,22 +168,22 @@ function init() {
   $("#locBtn").addEventListener("click", () => { renderAreaList(); openModal("#locModal"); });
 
   $("#gpsBtn").addEventListener("click", () => {
-    if (!navigator.geolocation) { toast("GPS tak support kat browser ni 😅"); return; }
-    $("#gpsBtn").textContent = "🛰️ Mencari lokasi…";
+    if (!navigator.geolocation) { toast("GPS isn't supported in this browser 😅"); return; }
+    $("#gpsBtn").textContent = "🛰️ Finding your location…";
     navigator.geolocation.getCurrentPosition(
       pos => {
         const me = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         const nearest = AREAS.map(a => ({ a, d: distanceKm(me, a) })).sort((x, y) => x.d - y.d)[0];
         state.location = nearest.a;
         state.shown = PAGE_SIZE;
-        $("#gpsBtn").innerHTML = "<span>🛰️</span> Guna lokasi GPS saya";
+        $("#gpsBtn").innerHTML = "<span>🛰️</span> Use my GPS location";
         closeModal("#locModal");
         renderResults();
-        toast(`📍 Kawasan terdekat: ${nearest.a.name}`);
+        toast(`📍 Nearest area: ${nearest.a.name}`);
       },
       () => {
-        $("#gpsBtn").innerHTML = "<span>🛰️</span> Guna lokasi GPS saya";
-        toast("Tak dapat akses GPS. Pilih kawasan manual ya 🙏");
+        $("#gpsBtn").innerHTML = "<span>🛰️</span> Use my GPS location";
+        toast("Couldn't access GPS. Please pick your area manually 🙏");
       }
     );
   });
@@ -202,7 +201,7 @@ function init() {
     const t = TUKANG.find(x => x.id === e.target.dataset.tukang);
     closeModal("#bookModal");
     e.target.reset();
-    toast(`✅ Request dihantar ke ${t.name}! Dia akan WhatsApp you sekejap lagi.`);
+    toast(`✅ Request sent to ${t.name}! They'll WhatsApp you shortly.`);
   });
 
   document.querySelectorAll("[data-close]").forEach(el =>

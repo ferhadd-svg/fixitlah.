@@ -1,6 +1,6 @@
 # kerjakita
 
-**Tukang berdekatan, dalam 5 km.**
+**Trusted pros near you, within 5 km.**
 
 A Malaysian on-demand services marketplace — from aircond servicing and paip
 bocor to mekanik kereta — that only matches customers with tukang (handymen /

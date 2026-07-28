@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>kerjakita — tukang berdekatan, dalam 5 km</title>
-  <meta name="description" content="kerjakita — pilih servis, kami carikan tukang dalam 5 km dari kawasan you. Aircond, paip, wireman, mekanik & lagi." />
+  <title>kerjakita — trusted pros near you, within 5 km</title>
+  <meta name="description" content="kerjakita — pick a service and we'll show pros within 5 km of your area. Aircon, plumbing, electrical, car mechanic & more." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -23,32 +23,32 @@
 
   <!-- ============ BOOKING (the landing) ============ -->
   <main class="wrap book">
-    <h1 class="book__title">Apa nak baiki hari ni?</h1>
-    <p class="book__sub">Pilih servis — kami tunjuk tukang dalam <b>5 km</b> dari <span id="subArea">Bukit Rimau</span>.</p>
+    <h1 class="book__title">What needs fixing today?</h1>
+    <p class="book__sub">Pick a service — we'll show pros within <b>5 km</b> of <span id="subArea">Bukit Rimau</span>.</p>
 
     <div class="services" id="services"><!-- service buttons injected --></div>
 
     <div class="results__bar">
-      <span class="results__count" id="resultsCount">Tukang berdekatan</span>
+      <span class="results__count" id="resultsCount">Pros near you</span>
     </div>
 
-    <div class="list" id="list"><!-- tukang rows injected --></div>
+    <div class="list" id="list"><!-- pro rows injected --></div>
 
     <div class="showmore" id="showmoreWrap" hidden>
-      <button class="btn btn--soft" id="showmoreBtn">Tunjuk lagi</button>
+      <button class="btn btn--soft" id="showmoreBtn">Show more</button>
     </div>
 
     <div class="empty" id="empty" hidden>
-      <p class="empty__title">Takde tukang dalam <span id="emptyRadius">5 km</span></p>
-      <p class="empty__sub">Kawasan you senyap sikit. Cuba besarkan kawasan carian.</p>
-      <button class="btn btn--primary" id="emptyExpand">Cari dalam 10 km</button>
+      <p class="empty__title">No pros within <span id="emptyRadius">5 km</span></p>
+      <p class="empty__sub">Your area is a bit quiet. Try widening the search.</p>
+      <button class="btn btn--primary" id="emptyExpand">Search within 10 km</button>
     </div>
   </main>
 
   <footer class="foot">
     <div class="wrap">
       <span class="foot__brand">kerjakita</span>
-      <span class="foot__note">Tukang berdekatan, dalam 5 km. Prototype demo — tukang & harga contoh sahaja. 🇲🇾</span>
+      <span class="foot__note">Trusted pros near you, within 5 km. Prototype demo — sample pros & prices only. 🇲🇾</span>
     </div>
   </footer>
 
@@ -57,10 +57,10 @@
     <div class="modal__backdrop" data-close></div>
     <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="locTitle">
       <div class="modal__head">
-        <h3 id="locTitle">Kawasan you</h3>
-        <button class="modal__x" data-close aria-label="Tutup">✕</button>
+        <h3 id="locTitle">Your area</h3>
+        <button class="modal__x" data-close aria-label="Close">✕</button>
       </div>
-      <button class="gps" id="gpsBtn"><span>🛰️</span> Guna lokasi GPS saya</button>
+      <button class="gps" id="gpsBtn"><span>🛰️</span> Use my GPS location</button>
       <div class="arealist" id="areaList"><!-- areas injected --></div>
     </div>
   </div>
@@ -70,24 +70,24 @@
     <div class="modal__backdrop" data-close></div>
     <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="bookTitle">
       <div class="modal__head">
-        <h3 id="bookTitle">Book tukang</h3>
-        <button class="modal__x" data-close aria-label="Tutup">✕</button>
+        <h3 id="bookTitle">Book a pro</h3>
+        <button class="modal__x" data-close aria-label="Close">✕</button>
       </div>
       <div class="book__who" id="bookWho"><!-- filled on open --></div>
       <form id="bookForm" class="book__form">
-        <label>Bila you nak?
+        <label>When do you need it?
           <select id="bookWhen" required>
-            <option value="ASAP">Secepat mungkin (ASAP)</option>
-            <option value="Hari ni petang">Hari ni, petang</option>
-            <option value="Esok pagi">Esok, pagi</option>
-            <option value="Hujung minggu">Hujung minggu</option>
+            <option value="As soon as possible">As soon as possible</option>
+            <option value="Today, afternoon">Today, afternoon</option>
+            <option value="Tomorrow, morning">Tomorrow, morning</option>
+            <option value="This weekend">This weekend</option>
           </select>
         </label>
-        <label>Cerita sikit masalah you
-          <textarea id="bookNote" rows="3" placeholder="cth: Aircond bilik tak sejuk dah 2 minggu" required></textarea>
+        <label>Tell us a bit about the problem
+          <textarea id="bookNote" rows="3" placeholder="e.g. Bedroom aircon hasn't been cold for 2 weeks" required></textarea>
         </label>
-        <button type="submit" class="btn btn--primary btn--block">Hantar request</button>
-        <p class="book__fine">Tukang akan WhatsApp you untuk confirm. (Demo — takde message betul dihantar.)</p>
+        <button type="submit" class="btn btn--primary btn--block">Send request</button>
+        <p class="book__fine">The pro will WhatsApp you to confirm. (Demo — no real message is sent.)</p>
       </form>
     </div>
   </div>
