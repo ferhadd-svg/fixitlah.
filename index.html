@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fixitlah. — Cari tukang dekat kawasan you</title>
+  <meta name="description" content="fixitlah. — book verified tukang (aircond, paip, wireman, mekanik & more) within 5 km of your kawasan. Support local, cepat sampai." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="wrap topbar__inner">
+      <a class="brand" href="#" aria-label="fixitlah home">
+        <span class="brand__logo">🛠️</span>
+        <span class="brand__name">fixitlah<span class="brand__dot">.</span></span>
+      </a>
+
+      <button class="locpill" id="locBtn" aria-haspopup="dialog">
+        <span class="locpill__ico">📍</span>
+        <span class="locpill__text">
+          <span class="locpill__label">Kawasan you</span>
+          <span class="locpill__area" id="locArea">Bukit Rimau</span>
+        </span>
+        <span class="locpill__chev">▾</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="wrap hero__inner">
+      <div class="hero__copy">
+        <span class="hero__eyebrow">Rumah rosak? Kereta buat hal? 😮‍💨</span>
+        <h1 class="hero__title">Cari tukang dekat<br/>kawasan you. <span class="hero__wave">Senang je.</span></h1>
+        <p class="hero__sub">
+          Aircond tak sejuk, paip bocor, plug hangus, kereta tak start —
+          <strong>fixitlah.</strong> match you dengan tukang yang <em>betul-betul dekat</em>,
+          dalam lingkungan <strong id="heroRadius">5 km</strong> je. Support local, cepat sampai.
+        </p>
+        <div class="hero__search">
+          <input id="searchInput" type="text" placeholder="Cari servis… cth: aircond, paip, mekanik" autocomplete="off" />
+          <button id="searchClear" class="hero__searchclear" aria-label="Clear" hidden>✕</button>
+        </div>
+        <div class="hero__stats">
+          <span><b id="statTukang">0</b> tukang online</span>
+          <span class="dot">•</span>
+          <span><b id="statRadius">5</b> km radius</span>
+          <span class="dot">•</span>
+          <span>100% <b>kawasan you</b></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CATEGORY CHIPS ============ -->
+  <nav class="cats" aria-label="Service categories">
+    <div class="wrap">
+      <div class="cats__scroll" id="catScroll"><!-- chips injected --></div>
+    </div>
+  </nav>
+
+  <!-- ============ RESULTS ============ -->
+  <main class="wrap results">
+    <div class="results__head">
+      <h2 class="results__title" id="resultsTitle">Tukang dekat you</h2>
+      <div class="results__radius">
+        <label for="radius">Radius: <b id="radiusVal">5 km</b></label>
+        <input type="range" id="radius" min="1" max="20" step="1" value="5" />
+      </div>
+    </div>
+
+    <div class="grid" id="grid"><!-- cards injected --></div>
+
+    <div class="empty" id="empty" hidden>
+      <div class="empty__emoji">🫤</div>
+      <h3>Alamak, takde tukang dalam <span id="emptyRadius">5 km</span></h3>
+      <p>Kawasan you memang senyap sikit. Cuba besarkan radius atau tukar servis.</p>
+      <button class="btn btn--primary" id="emptyExpand">Besarkan ke 10 km</button>
+    </div>
+  </main>
+
+  <!-- ============ WHY SMALL RADIUS ============ -->
+  <section class="why">
+    <div class="wrap why__inner">
+      <h2 class="why__title">Kenapa <span class="txt-accent">5 km je</span>?</h2>
+      <div class="why__grid">
+        <div class="why__card">
+          <div class="why__ico">⚡</div>
+          <h3>Cepat sampai</h3>
+          <p>Tukang duduk sekampung dengan you. Tak payah tunggu orang drive sejam dari KL.</p>
+        </div>
+        <div class="why__card">
+          <div class="why__ico">🤝</div>
+          <h3>Support local</h3>
+          <p>Duit stay dalam kawasan. You tolong jiran sebelah cari rezeki, dia tolong baiki rumah you.</p>
+        </div>
+        <div class="why__card">
+          <div class="why__ico">🎯</div>
+          <h3>Kurang lauk-lauk</h3>
+          <p>Sebab radius kecik, tukang tak lawan seluruh Selangor. Job lagi fair, harga pun elok.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BECOME A TUKANG ============ -->
+  <section class="join" id="join">
+    <div class="wrap join__inner">
+      <div class="join__copy">
+        <span class="join__eyebrow">Untuk tukang & freelancer</span>
+        <h2>Ada skill? Jadi tukang <span class="brand__name">fixitlah<span class="brand__dot">.</span></span></h2>
+        <p>
+          Daftar sekali, dapat job <strong>dalam 5 km dari base you</strong> je — tak yah drive
+          merata-rata. You set kawasan, kami hantar customer yang betul-betul dekat.
+        </p>
+        <ul class="join__list">
+          <li>✅ Job auto-match ikut kawasan you</li>
+          <li>✅ Customer dah verified, bayar dalam app</li>
+          <li>✅ Rating &amp; badge — makin banyak job, makin naik</li>
+        </ul>
+        <button class="btn btn--dark" id="joinBtn">Daftar jadi tukang</button>
+      </div>
+      <div class="join__card">
+        <div class="join__cardhead">
+          <span class="join__avatar">AF</span>
+          <div>
+            <b>Ahmad Faizal</b>
+            <span class="join__meta">Aircond • Kota Kemuning</span>
+          </div>
+          <span class="badge badge--verified">✔ Verified</span>
+        </div>
+        <div class="join__zone">
+          <span class="join__zonedot"></span>
+          Zon kerja: <b>5 km dari Kota Kemuning</b>
+        </div>
+        <div class="join__earn">
+          <span>Minggu ni</span>
+          <b>RM 1,240</b>
+          <span class="join__earnsub">18 job • semua dalam kawasan</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="foot">
+    <div class="wrap foot__inner">
+      <div class="foot__brand">
+        <span class="brand__name">fixitlah<span class="brand__dot">.</span></span>
+        <p>Cari tukang, senang. Kawasan you, tukang you.</p>
+      </div>
+      <p class="foot__note">Prototype demo — semua tukang & harga adalah contoh sahaja. Made in Malaysia 🇲🇾</p>
+    </div>
+  </footer>
+
+  <!-- ============ LOCATION MODAL ============ -->
+  <div class="modal" id="locModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="locModalTitle">
+      <div class="modal__head">
+        <h3 id="locModalTitle">Pilih kawasan you</h3>
+        <button class="modal__x" data-close aria-label="Tutup">✕</button>
+      </div>
+      <button class="gps" id="gpsBtn">
+        <span>🛰️</span> Guna lokasi GPS saya
+      </button>
+      <div class="arealist" id="areaList"><!-- areas injected --></div>
+    </div>
+  </div>
+
+  <!-- ============ BOOKING MODAL ============ -->
+  <div class="modal" id="bookModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="bookTitle">
+      <div class="modal__head">
+        <h3 id="bookTitle">Book tukang</h3>
+        <button class="modal__x" data-close aria-label="Tutup">✕</button>
+      </div>
+      <div class="book__who" id="bookWho"><!-- filled on open --></div>
+      <form id="bookForm" class="book__form">
+        <label>Bila you nak?
+          <select id="bookWhen" required>
+            <option value="Sekarang boleh?">Secepat mungkin (ASAP)</option>
+            <option value="Hari ni petang">Hari ni, petang</option>
+            <option value="Esok pagi">Esok, pagi</option>
+            <option value="Hujung minggu">Hujung minggu</option>
+          </select>
+        </label>
+        <label>Cerita sikit masalah you
+          <textarea id="bookNote" rows="3" placeholder="cth: Aircond bilik tidur bunyi & tak sejuk dah 2 minggu" required></textarea>
+        </label>
+        <button type="submit" class="btn btn--primary btn--block">Hantar request 📩</button>
+        <p class="book__fineprint">Tukang akan WhatsApp you untuk confirm. (Demo — takde message betul dihantar.)</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ TOAST ============ -->
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
