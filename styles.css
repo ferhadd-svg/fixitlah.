@@ -381,3 +381,142 @@ body {
   .trow { flex-wrap: wrap; }
   .tmeta { width: 100%; justify-content: space-between; padding-left: 60px; }
 }
+
+/* ============================================================
+   Screen-based customer flow
+   ============================================================ */
+.screen[hidden] { display: none; }
+
+/* ---------- Splash ---------- */
+.splash { min-height: 100vh; display: grid; place-items: center; background: var(--forest); color: #fff; text-align: center; cursor: pointer; }
+.splash__logo { font-size: clamp(38px, 10vw, 60px); font-weight: 850; letter-spacing: -.03em; animation: pop .5s cubic-bezier(.2,.9,.3,1.2); }
+.splash__tag { color: var(--bright); font-weight: 700; margin-top: 8px; letter-spacing: .01em; }
+@keyframes pop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ---------- Login ---------- */
+.login { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.login__inner { width: 100%; max-width: 380px; text-align: center; }
+.login__logo { font-size: 34px; font-weight: 850; letter-spacing: -.03em; color: var(--forest); }
+.login__sub { color: var(--forest-soft); margin: 8px 0 26px; font-size: 16px; }
+.login__btns { display: grid; gap: 10px; }
+.authbtn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: inherit; font-size: 15px; font-weight: 700; color: var(--forest);
+  background: #fff; border: 1.5px solid var(--line); border-radius: 999px; padding: 14px; cursor: pointer;
+}
+.authbtn:hover { border-color: var(--forest); }
+.authbtn--dark { background: var(--forest); color: #fff; border-color: var(--forest); }
+.authbtn__ico { font-weight: 800; font-size: 16px; }
+.login__guest { margin-top: 18px; background: none; border: none; font-family: inherit; font-size: 15px; font-weight: 700; color: var(--forest); cursor: pointer; }
+.login__guest:hover { text-decoration: underline; }
+.login__terms { font-size: 12px; color: var(--muted); margin-top: 18px; }
+.login__pro { margin-top: 24px; background: none; border: none; font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.login__pro:hover { color: var(--forest); text-decoration: underline; }
+
+/* ---------- App header ---------- */
+.apphdr {
+  position: sticky; top: 0; z-index: 40; background: var(--bg); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  height: 62px; padding: 0 20px;
+}
+.apphdr--flow { justify-content: flex-start; }
+.apphdr__title { font-weight: 800; font-size: 18px; letter-spacing: -.02em; }
+.apphdr__spacer { flex: 1; }
+.apphdr--flow .apphdr__title { flex: 1; }
+.backbtn { background: var(--soft); border: none; width: 38px; height: 38px; border-radius: 50%; font-size: 18px; cursor: pointer; color: var(--forest); flex: 0 0 auto; }
+.backbtn:hover { background: var(--soft-2); }
+.locpill--sm { padding: 7px 12px; font-size: 13.5px; }
+
+/* ---------- Home ---------- */
+.home__body { padding: 26px 20px 40px; }
+.home__title { font-size: clamp(26px, 5.4vw, 34px); font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+.catgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 12px; margin-top: 22px; }
+.cat {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: var(--soft); border: 1.5px solid transparent; border-radius: 18px; padding: 20px 10px; cursor: pointer;
+  font-family: inherit; aspect-ratio: 1 / 0.92; transition: border-color .15s ease, transform .1s ease, background .15s ease;
+}
+.cat:hover { border-color: var(--forest); background: #fff; }
+.cat:active { transform: translateY(1px); }
+.cat__emoji { font-size: 30px; }
+.cat__label { font-size: 14px; font-weight: 700; color: var(--forest); text-align: center; }
+.home__pro { display: block; margin: 30px auto 0; background: none; border: none; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer; }
+.home__pro:hover { color: var(--forest); text-decoration: underline; }
+
+/* ---------- Subcategory ---------- */
+.sub__body { padding: 22px 20px 40px; }
+.sub__hint { color: var(--forest-soft); font-size: 16px; margin-bottom: 16px; }
+.sublist { display: grid; gap: 10px; }
+.subitem {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 18px;
+  font-family: inherit; font-size: 16px; font-weight: 700; color: var(--forest); cursor: pointer; text-align: left;
+}
+.subitem:hover { border-color: var(--forest); }
+.subitem__go { color: var(--muted); font-size: 20px; }
+
+/* ---------- Pros body ---------- */
+.pros__body { padding: 20px 20px 40px; }
+
+/* ---------- Booking / payment flow ---------- */
+.flow__body { padding: 22px 20px 100px; }
+.flowcard { background: var(--soft); border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.flowcard b { font-size: 16px; }
+.flowcard__sub { font-size: 13px; color: var(--muted); }
+.flowstep { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; margin: 24px 0 12px; }
+.flowstep__n { background: var(--forest); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; }
+.chiprow { display: flex; flex-wrap: wrap; gap: 10px; }
+.tchip {
+  font-family: inherit; font-size: 15px; font-weight: 700; color: var(--forest); cursor: pointer;
+  background: var(--soft); border: 1.5px solid transparent; border-radius: 999px; padding: 11px 18px;
+}
+.tchip.is-on { background: var(--forest); color: #fff; }
+.flowta {
+  width: 100%; font-family: inherit; font-size: 15px; padding: 14px; border: 1.5px solid var(--line);
+  border-radius: 14px; background: #fff; color: var(--forest); resize: vertical;
+}
+.flowta:focus { outline: none; border-color: var(--forest); }
+
+.flowbar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 30; background: #fff; border-top: 1px solid var(--line);
+  display: flex; align-items: center; gap: 14px; padding: 14px 20px; max-width: 720px; margin: 0 auto;
+}
+.flowbar__price { font-size: 14px; color: var(--muted); white-space: nowrap; }
+.flowbar__price b { color: var(--forest); font-size: 18px; font-weight: 800; }
+.flowbar .btn { flex: 1; }
+
+/* order summary */
+.ordersum { background: var(--soft); border-radius: 16px; padding: 6px 16px; }
+.ordersum__row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; font-size: 15px; border-bottom: 1px solid var(--line); }
+.ordersum__row:last-child { border-bottom: none; }
+.ordersum__row span { color: var(--forest-soft); }
+.ordersum__row--total b { font-size: 17px; }
+
+/* payment methods */
+.paylist { display: grid; gap: 10px; }
+.paymethod {
+  display: flex; align-items: center; gap: 14px; background: #fff; border: 1.5px solid var(--line);
+  border-radius: 14px; padding: 15px 16px; cursor: pointer; font-family: inherit; text-align: left;
+}
+.paymethod:hover { border-color: var(--forest-soft); }
+.paymethod.is-on { border-color: var(--forest); background: var(--soft); }
+.paymethod__ico { font-size: 22px; width: 30px; text-align: center; }
+.paymethod__txt { flex: 1; display: grid; }
+.paymethod__txt b { font-size: 15px; font-weight: 700; color: var(--forest); }
+.paymethod__txt span { font-size: 12.5px; color: var(--muted); }
+.paymethod__radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); flex: 0 0 auto; }
+.paymethod.is-on .paymethod__radio { border-color: var(--forest); background: radial-gradient(circle at center, var(--forest) 0 6px, #fff 7px); }
+.pay__fine { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 14px; }
+
+/* ---------- Done ---------- */
+.done { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.done__inner { width: 100%; max-width: 420px; text-align: center; }
+.done__tick { width: 74px; height: 74px; border-radius: 50%; background: var(--bright); color: var(--forest); display: grid; place-items: center; font-size: 40px; font-weight: 800; margin: 0 auto 18px; animation: pop .4s cubic-bezier(.2,.9,.3,1.2); }
+.done h1 { font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
+.done p { color: var(--forest-soft); margin: 10px 0 22px; }
+.done .flowcard { display: block; text-align: left; }
+.done .ordersum__row { border-color: rgba(0,0,0,.06); }
+.done .btn { margin-top: 22px; }
+
+/* prov as a screen scrolls normally */
+.prov.screen { padding-top: 20px; }

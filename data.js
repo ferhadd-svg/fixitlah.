@@ -23,6 +23,75 @@ const CATEGORIES = [
   { id: "furniture", emoji: "🪑", label: "Furniture Assembly",tagline: "IKEA, wardrobe, beds" },
 ];
 
+// Two-level category tree: short top-level groups -> detailed sub-services.
+// Each sub maps to an underlying pro service pool (the 14 CATEGORIES ids).
+const TAXONOMY = [
+  { id: "cooling",    emoji: "❄️", label: "Aircon", subs: [
+    { label: "Aircon service", service: "aircond" },
+    { label: "Aircon repair", service: "aircond" },
+    { label: "Install / relocate", service: "aircond" },
+    { label: "Chemical wash", service: "aircond" },
+  ]},
+  { id: "plumbing",   emoji: "🔧", label: "Plumbing", subs: [
+    { label: "Leaks & pipes", service: "plumbing" },
+    { label: "Water heater", service: "plumbing" },
+    { label: "Toilet & sink", service: "plumbing" },
+    { label: "Blocked drains", service: "plumbing" },
+  ]},
+  { id: "electrical", emoji: "⚡", label: "Electrical", subs: [
+    { label: "Wiring & sockets", service: "electrical" },
+    { label: "Lights & fans", service: "electrical" },
+    { label: "Water heater install", service: "electrical" },
+    { label: "DB / breaker box", service: "electrical" },
+  ]},
+  { id: "cleaning",   emoji: "🧽", label: "Cleaning", subs: [
+    { label: "Home cleaning", service: "cleaning" },
+    { label: "Deep clean", service: "cleaning" },
+    { label: "Sofa & mattress", service: "cleaning" },
+    { label: "Post-reno clean", service: "cleaning" },
+  ]},
+  { id: "car",        emoji: "🚗", label: "Car", subs: [
+    { label: "Car service", service: "carmech" },
+    { label: "Tyres", service: "carmech" },
+    { label: "Car detailing", service: "carmech" },
+    { label: "Car audio / player", service: "carmech" },
+    { label: "Battery", service: "carmech" },
+    { label: "Car aircon", service: "carmech" },
+  ]},
+  { id: "reno",       emoji: "🏗️", label: "Construction", subs: [
+    { label: "Tiling", service: "reno" },
+    { label: "Plaster & ceiling", service: "reno" },
+    { label: "Painting", service: "painting" },
+    { label: "Waterproofing", service: "reno" },
+    { label: "Minor repairs", service: "reno" },
+  ]},
+  { id: "outdoor",    emoji: "🌿", label: "Outdoor", subs: [
+    { label: "Lawn & garden", service: "grasscut" },
+    { label: "Pest control", service: "pest" },
+  ]},
+  { id: "homeset",    emoji: "🪑", label: "Home setup", subs: [
+    { label: "Furniture assembly", service: "furniture" },
+    { label: "CCTV & antenna", service: "cctv" },
+    { label: "Locksmith", service: "locksmith" },
+    { label: "Appliance repair", service: "appliance" },
+  ]},
+  { id: "motor",      emoji: "🏍️", label: "Motorbike", subs: [
+    { label: "Service", service: "motor" },
+    { label: "Tyres", service: "motor" },
+    { label: "Battery", service: "motor" },
+  ]},
+];
+
+// Payment methods (Malaysia-first). Prototype only — no real charge.
+const PAYMETHODS = [
+  { id: "applepay",  emoji: "🍎", label: "Apple Pay",           note: "One tap" },
+  { id: "googlepay", emoji: "🟢", label: "Google Pay",          note: "One tap" },
+  { id: "tng",       emoji: "🔵", label: "Touch 'n Go eWallet", note: "Malaysia's #1 e-wallet" },
+  { id: "duitnow",   emoji: "🟥", label: "DuitNow QR",          note: "Scan to pay" },
+  { id: "fpx",       emoji: "🏦", label: "Online banking (FPX)",note: "Maybank, CIMB & more" },
+  { id: "card",      emoji: "💳", label: "Credit / debit card", note: "Visa, Mastercard" },
+];
+
 // Preset neighbourhoods the customer can pick from, plus GPS.
 // `live: true` = inside the pilot zone. Everything else is "coming soon"
 // and routes visitors to the waitlist.

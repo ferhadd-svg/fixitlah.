@@ -160,12 +160,18 @@ SMS for phone-OTP has a small per-message cost — see decisions below.
 
 ---
 
-## 11. Decisions to lock before building
+## 11. Decisions
 
-1. **Auth method:** phone OTP (familiar, elderly-friendly, but SMS costs a few sen each) **vs** email magic-link / Google (free, slightly less familiar). _Recommendation: start with Google + email magic-link to save cost; add phone OTP if users ask._
-2. **Payment gateway:** ToyyibPay vs Billplz (both fine; ToyyibPay is the simplest to start).
-3. **Frontend migration:** port to Next.js now (recommended) vs keep the static site + Supabase JS to move faster short-term.
-4. **Repo/brand:** rename the GitHub repo `fixitlah.` → `kerjakita`? (cosmetic, changes the URL).
+**Locked (from the prototype flow):**
+- **Flow:** splash → **login** → home (simple top categories) → sub-service → pros → booking → payment → confirmed. Login-first, with a **"Continue as guest"** fallback so no one bounces at the wall.
+- **Login methods:** Google + Apple + email (add phone OTP later if wanted).
+- **Categories:** two-level — short top-level groups (Aircon, Plumbing, Car, Construction…) drilling into detailed sub-services (Car → tyres, detailing, audio, battery…).
+- **Payment methods (customer-facing):** Apple Pay, Google Pay, Touch 'n Go, DuitNow QR, FPX online banking, card.
+
+**Still to lock:**
+1. **Payment gateway** for the pro **listing fee** + (later) job payments: ToyyibPay vs Billplz. _(ToyyibPay simplest to start.)_ The customer payment methods above are surfaced through whichever gateway/aggregator we pick.
+2. **Frontend migration:** port to Next.js now (recommended) vs keep the static site + Supabase JS short-term.
+3. **Repo/brand:** rename the GitHub repo `fixitlah.` → `kerjakita`? (cosmetic, changes the URL).
 
 ---
 

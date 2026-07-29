@@ -1,69 +1,29 @@
 /* ============================================================
-   kerjakita  —  app logic
-   Booking-first. Pick a service, see tukang within 5 km, book.
+   kerjakita  —  app logic (screen-based customer flow)
+   splash -> login -> home -> subcategory -> pros -> booking
+   -> payment -> confirmed.  Front-end prototype, mock data.
    ============================================================ */
 
 const PAGE_SIZE = 6;
 
 const state = {
-  location: AREAS[0],   // default: Bukit Rimau
+  location: AREAS[0],   // Bukit Rimau
   radiusKm: 5,
-  category: null,       // null = Semua
   shown: PAGE_SIZE,
+  user: null,           // set on login (or guest)
+  topCat: null,
+  sub: null,
+  pro: null,
+  when: "As soon as possible",
+  pay: PAYMETHODS[0].id,
+  returnScreen: "scrHome",
 };
 
 const $ = sel => document.querySelector(sel);
+const initials = name => name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
+const catById = id => CATEGORIES.find(c => c.id === id);
 
-// ---------- Helpers ----------
-function initials(name) {
-  return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
-}
-function catById(id) { return CATEGORIES.find(c => c.id === id); }
-
-// ---------- Deterministic "past jobs" generator ----------
-// Seeded so each pro's history is stable between renders.
-function seededRng(str) {
-  let h = 1779033703 ^ str.length;
-  for (let i = 0; i < str.length; i++) {
-    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-    h = (h << 13) | (h >>> 19);
-  }
-  return function () {
-    h = Math.imul(h ^ (h >>> 16), 2246822507);
-    h = Math.imul(h ^ (h >>> 13), 3266489909);
-    h ^= h >>> 16;
-    return (h >>> 0) / 4294967296;
-  };
-}
-
-const WHENS = ["3 days ago", "1 week ago", "2 weeks ago", "3 weeks ago", "1 month ago", "2 months ago"];
-
-function proStats(t) {
-  const rng = seededRng(t.id + "stats");
-  const onTime = Math.min(99, Math.round(90 + (t.rating - 4.5) * 16 + rng() * 3));
-  const repeat = Math.round(52 + (t.rating - 4.5) * 30 + rng() * 18);
-  return { jobs: t.jobs, onTime, repeat: Math.min(88, repeat), since: t.since };
-}
-
-function proJobs(t) {
-  const rng = seededRng(t.id + "jobs");
-  const cat = catById(t.service);
-  const count = 4 + Math.floor(rng() * 2); // 4–5
-  const out = [];
-  for (let i = 0; i < count; i++) {
-    const five = rng() < 0.5 + (t.rating - 4.5) * 0.7; // higher rating → more 5★
-    const stars = five ? 5 : 4;
-    const pool = five ? REVIEW_POOL.positive : REVIEW_POOL.good;
-    const text = pool[Math.floor(rng() * pool.length)];
-    const author = REVIEW_POOL.authors[Math.floor(rng() * REVIEW_POOL.authors.length)];
-    out.push({ stars, text, author, when: WHENS[i] || "a while ago", job: cat.label });
-  }
-  return out;
-}
-
-let currentProfileId = null;
-
-// Haversine distance in km — the heart of the 5 km matching.
+// ---------- Distance / matching ----------
 function distanceKm(a, b) {
   const R = 6371;
   const dLat = (b.lat - a.lat) * Math.PI / 180;
@@ -72,37 +32,79 @@ function distanceKm(a, b) {
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
-
-function matchedTukang() {
-  const here = state.location;
+function prosFor(service) {
   return TUKANG
-    .map(t => ({ ...t, dist: distanceKm(here, t) }))
-    .filter(t => t.dist <= state.radiusKm)
-    .filter(t => !state.category || t.service === state.category)
+    .map(t => ({ ...t, dist: distanceKm(state.location, t) }))
+    .filter(t => t.dist <= state.radiusKm && t.service === service)
     .sort((a, b) => a.dist - b.dist);
 }
 
-// ---------- Service picker ----------
-function renderServices() {
-  const wrap = $("#services");
-  const all = `<button class="svc ${!state.category ? "is-active" : ""}" data-cat="">
-      <span class="svc__emoji">🧰</span> All</button>`;
-  const rest = CATEGORIES.map(c => `
-    <button class="svc ${state.category === c.id ? "is-active" : ""}" data-cat="${c.id}">
-      <span class="svc__emoji">${c.emoji}</span> ${c.label}
-    </button>`).join("");
-  wrap.innerHTML = all + rest;
-  wrap.querySelectorAll(".svc").forEach(b => {
-    b.addEventListener("click", () => {
-      state.category = b.dataset.cat || null;
-      state.shown = PAGE_SIZE;
-      renderServices();
-      renderResults();
-    });
-  });
+// ---------- Seeded past-jobs generator (for profiles) ----------
+function seededRng(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+  return function () {
+    h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  };
+}
+const WHENS = ["3 days ago", "1 week ago", "2 weeks ago", "3 weeks ago", "1 month ago", "2 months ago"];
+function proStats(t) {
+  const rng = seededRng(t.id + "s");
+  return { jobs: t.jobs, onTime: Math.min(99, Math.round(90 + (t.rating - 4.5) * 16 + rng() * 3)),
+    repeat: Math.min(88, Math.round(52 + (t.rating - 4.5) * 30 + rng() * 18)), since: t.since };
+}
+function proJobs(t) {
+  const rng = seededRng(t.id + "j");
+  const cat = catById(t.service);
+  const n = 4 + Math.floor(rng() * 2), out = [];
+  for (let i = 0; i < n; i++) {
+    const five = rng() < 0.5 + (t.rating - 4.5) * 0.7;
+    const pool = five ? REVIEW_POOL.positive : REVIEW_POOL.good;
+    out.push({ stars: five ? 5 : 4, text: pool[Math.floor(rng() * pool.length)],
+      author: REVIEW_POOL.authors[Math.floor(rng() * REVIEW_POOL.authors.length)], when: WHENS[i] || "a while ago", job: cat.label });
+  }
+  return out;
 }
 
-// ---------- Tukang rows ----------
+// ---------- Screen router ----------
+const SCREENS = ["scrSplash", "scrLogin", "scrHome", "scrSub", "scrPros", "scrBooking", "scrPay", "scrDone", "proView"];
+function showScreen(id) {
+  SCREENS.forEach(s => { const el = document.getElementById(s); if (el) el.hidden = s !== id; });
+  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+}
+
+// ---------- Home ----------
+function renderCatGrid() {
+  $("#catGrid").innerHTML = TAXONOMY.map(c =>
+    `<button class="cat" data-cat="${c.id}"><span class="cat__emoji">${c.emoji}</span><span class="cat__label">${c.label}</span></button>`
+  ).join("");
+  $("#catGrid").querySelectorAll(".cat").forEach(b =>
+    b.addEventListener("click", () => openTopCat(TAXONOMY.find(c => c.id === b.dataset.cat))));
+}
+function goHome() { showScreen("scrHome"); updateAreaLabels(); }
+
+// ---------- Subcategory ----------
+function openTopCat(cat) {
+  state.topCat = cat;
+  $("#subTitle").textContent = cat.label;
+  $("#subHintCat").textContent = cat.label.toLowerCase();
+  $("#subList").innerHTML = cat.subs.map((s, i) =>
+    `<button class="subitem" data-i="${i}"><span>${s.label}</span><span class="subitem__go">›</span></button>`
+  ).join("");
+  $("#subList").querySelectorAll(".subitem").forEach(b =>
+    b.addEventListener("click", () => openSub(cat.subs[+b.dataset.i])));
+  showScreen("scrSub");
+}
+
+// ---------- Pros list ----------
+function openSub(sub) {
+  state.sub = sub;
+  state.shown = PAGE_SIZE;
+  $("#prosTitle").textContent = sub.label;
+  renderPros();
+  showScreen("scrPros");
+}
 function tukangRow(t) {
   const cat = catById(t.service);
   const distTxt = t.dist < 1 ? `${Math.round(t.dist * 1000)} m` : `${t.dist.toFixed(1)} km`;
@@ -119,290 +121,259 @@ function tukangRow(t) {
     </div>
   </div>`;
 }
+function renderPros() {
+  const listEl = $("#list"), empty = $("#prosEmpty"), showmoreWrap = $("#showmoreWrap");
+  updateAreaLabels();
 
-function renderResults() {
-  const list = matchedTukang();
-  const listEl = $("#list");
-  const empty = $("#empty");
-  const showmoreWrap = $("#showmoreWrap");
-
-  $("#locArea").textContent = state.location.name;
-  $("#subArea").textContent = state.location.name;
-  $("#wlArea").textContent = state.location.name;
-
-  // Pilot zone gate: only live areas show the booking flow.
-  const inZone = !!state.location.live;
-  $("#liveFlow").hidden = !inZone;
-  $("#waitlist").hidden = inZone;
-  if (!inZone) return;
-
-  if (list.length === 0) {
-    listEl.innerHTML = "";
-    showmoreWrap.hidden = true;
-    empty.hidden = false;
-    $("#emptyRadius").textContent = `${state.radiusKm} km`;
-    $("#emptyExpand").textContent = `Search within ${Math.min(20, state.radiusKm + 5)} km`;
-    $("#resultsCount").textContent = "No pros nearby";
+  if (!state.location.live) {
+    listEl.innerHTML = ""; showmoreWrap.hidden = true; empty.hidden = false;
+    $("#prosCount").textContent = "";
+    $("#prosEmptyTitle").textContent = `Coming soon to ${state.location.name}`;
+    $("#prosEmptySub").textContent = "We're live in Bukit Rimau & Kota Kemuning. Try there to see it in action.";
     return;
   }
-
+  const list = prosFor(state.sub.service);
+  if (list.length === 0) {
+    listEl.innerHTML = ""; showmoreWrap.hidden = true; empty.hidden = false;
+    $("#prosCount").textContent = "";
+    $("#prosEmptyTitle").textContent = `No ${state.sub.label.toLowerCase()} pros within ${state.radiusKm} km`;
+    $("#prosEmptySub").textContent = "Try a nearby area.";
+    return;
+  }
   empty.hidden = true;
   const visible = list.slice(0, state.shown);
   listEl.innerHTML = visible.map(tukangRow).join("");
-
-  // Whole row opens the profile; the Book button books directly.
   listEl.querySelectorAll(".trow").forEach(row => {
     row.addEventListener("click", () => openProfile(row.dataset.id));
-    row.addEventListener("keydown", e => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProfile(row.dataset.id); }
-    });
+    row.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProfile(row.dataset.id); } });
   });
   listEl.querySelectorAll("[data-book]").forEach(b =>
-    b.addEventListener("click", e => { e.stopPropagation(); openBooking(b.dataset.book); }));
+    b.addEventListener("click", e => { e.stopPropagation(); startBooking(b.dataset.book); }));
 
   const remaining = list.length - visible.length;
   showmoreWrap.hidden = remaining <= 0;
   if (remaining > 0) $("#showmoreBtn").textContent = `Show more (${remaining})`;
-
-  const s = list.length === 1 ? "" : "s";
-  $("#resultsCount").textContent = `${list.length} pro${s} within ${state.radiusKm} km`;
-}
-
-// ---------- Location modal ----------
-function renderAreaList() {
-  const wrap = $("#areaList");
-  const item = a => {
-    const active = a.id === state.location.id;
-    return `<button class="arealist__item ${active ? "is-active" : ""} ${a.live ? "" : "is-soon"}" data-area="${a.id}">
-      <span>${a.name}</span>
-      ${a.live ? '<span class="tag-live">Live</span>' : '<span class="tag-soon">Soon</span>'}
-    </button>`;
-  };
-  const live = AREAS.filter(a => a.live);
-  const soon = AREAS.filter(a => !a.live);
-  wrap.innerHTML =
-    `<div class="arealist__sep">Live now</div>` + live.map(item).join("") +
-    `<div class="arealist__sep">Coming soon — join the waitlist</div>` + soon.map(item).join("");
-  wrap.querySelectorAll(".arealist__item").forEach(item => {
-    item.addEventListener("click", () => {
-      state.location = AREAS.find(a => a.id === item.dataset.area);
-      state.shown = PAGE_SIZE;
-      closeModal("#locModal");
-      renderResults();
-      toast(`📍 Area: ${state.location.name}`);
-    });
-  });
+  $("#prosCount").textContent = `${list.length} ${state.sub.label.toLowerCase()} pro${list.length === 1 ? "" : "s"} within ${state.radiusKm} km`;
 }
 
 // ---------- Profile modal ----------
-function openProfile(tukangId) {
-  const t = TUKANG.find(x => x.id === tukangId);
-  const cat = catById(t.service);
-  const s = proStats(t);
-  const jobs = proJobs(t);
-  currentProfileId = tukangId;
-
+let currentProfileId = null;
+function openProfile(id) {
+  const t = TUKANG.find(x => x.id === id); const cat = catById(t.service);
+  const s = proStats(t), jobs = proJobs(t); currentProfileId = id;
   const jobsHtml = jobs.map(j => `
     <div class="job">
-      <div class="job__top">
-        <span class="job__stars">${"★".repeat(j.stars)}${"☆".repeat(5 - j.stars)}</span>
-        <span class="job__when">${j.when}</span>
-      </div>
-      <p class="job__text">“${j.text}”</p>
-      <div class="job__meta"><b>${j.author}</b> · ${j.job}</div>
+      <div class="job__top"><span class="job__stars">${"★".repeat(j.stars)}${"☆".repeat(5 - j.stars)}</span><span class="job__when">${j.when}</span></div>
+      <p class="job__text">“${j.text}”</p><div class="job__meta"><b>${j.author}</b> · ${j.job}</div>
     </div>`).join("");
-
   $("#profileBody").innerHTML = `
     <div class="profile__head">
       <div class="profile__top">
         <div class="profile__avatar">${initials(t.name)}</div>
-        <div>
-          <div class="profile__name">${t.name}${t.verified ? ' <span class="tick" title="Verified">✔</span>' : ""}</div>
-          <div class="profile__svc">${cat.emoji} ${cat.label} · ${t.area}</div>
-        </div>
+        <div><div class="profile__name">${t.name}${t.verified ? ' <span class="tick">✔</span>' : ""}</div>
+        <div class="profile__svc">${cat.emoji} ${cat.label} · ${t.area}</div></div>
       </div>
       <div class="profile__rate">
-        <span><span class="profile__star">★</span> <b>${t.rating.toFixed(1)}</b> (${t.reviews} reviews)</span>
-        <span><b>${t.jobs}</b> jobs done</span>
-        <span>Responds <b>${t.respondsIn}</b></span>
-        <span>From <b>RM${t.priceFrom}</b></span>
+        <span><span class="profile__star">★</span> <b>${t.rating.toFixed(1)}</b> (${t.reviews})</span>
+        <span><b>${t.jobs}</b> jobs</span><span>Responds <b>${t.respondsIn}</b></span><span>From <b>RM${t.priceFrom}</b></span>
       </div>
     </div>
-
     <div class="trustrow">
-      <span class="trustbadge">🛡️ Payment protected</span>
-      <span class="trustbadge">✅ 30-day guarantee</span>
-      ${t.verified ? '<span class="trustbadge">🪪 ID verified</span>' : ""}
-      <span class="trustbadge">📅 Member since ${s.since}</span>
+      <span class="trustbadge">🛡️ Payment protected</span><span class="trustbadge">✅ 30-day guarantee</span>
+      ${t.verified ? '<span class="trustbadge">🪪 ID verified</span>' : ""}<span class="trustbadge">📅 Since ${s.since}</span>
     </div>
-
-    <div class="profile__section">
-      <h4>About</h4>
-      <p class="profile__about">${t.blurb}</p>
-    </div>
-
+    <div class="profile__section"><h4>About</h4><p class="profile__about">${t.blurb}</p></div>
     <div class="stats">
-      <div class="stat"><b>${s.jobs}</b><span>Jobs done</span></div>
-      <div class="stat"><b>${s.onTime}%</b><span>On time</span></div>
-      <div class="stat"><b>${t.rating.toFixed(1)}</b><span>Rating</span></div>
-      <div class="stat"><b>${s.repeat}%</b><span>Repeat clients</span></div>
+      <div class="stat"><b>${s.jobs}</b><span>Jobs done</span></div><div class="stat"><b>${s.onTime}%</b><span>On time</span></div>
+      <div class="stat"><b>${t.rating.toFixed(1)}</b><span>Rating</span></div><div class="stat"><b>${s.repeat}%</b><span>Repeat</span></div>
     </div>
-
-    <div class="profile__section"><h4>Recent jobs & reviews</h4></div>
-    <div class="jobs">${jobsHtml}</div>`;
-
+    <div class="profile__section"><h4>Recent jobs & reviews</h4></div><div class="jobs">${jobsHtml}</div>`;
   $("#profileBook").textContent = `Book ${t.name.split(" ")[0]} · from RM${t.priceFrom}`;
   openModal("#profileModal");
 }
 
-// ---------- Booking modal ----------
-function openBooking(tukangId) {
-  const t = TUKANG.find(x => x.id === tukangId);
-  const cat = catById(t.service);
+// ---------- Booking ----------
+function startBooking(proId) {
+  closeModal("#profileModal");
+  state.pro = TUKANG.find(x => x.id === proId);
+  state.when = "As soon as possible";
+  const cat = catById(state.pro.service);
   $("#bookWho").innerHTML = `
-    <div class="tavatar">${initials(t.name)}</div>
-    <div><b>${t.name}</b><br/><span>${cat.emoji} ${cat.label} · from RM${t.priceFrom}</span></div>`;
-  $("#bookForm").dataset.tukang = tukangId;
-  openModal("#bookModal");
+    <div class="tavatar">${initials(state.pro.name)}</div>
+    <div><b>${state.pro.name}</b><br/><span class="flowcard__sub">${cat.emoji} ${state.sub ? state.sub.label : cat.label} · ${state.pro.area}</span></div>`;
+  $("#bookEst").textContent = `from RM${state.pro.priceFrom}`;
+  $("#bookNote").value = "";
+  $("#whenRow").querySelectorAll(".tchip").forEach((c, i) => c.classList.toggle("is-on", i === 0));
+  showScreen("scrBooking");
+}
+
+// ---------- Payment ----------
+function renderPayment() {
+  const cat = catById(state.pro.service);
+  $("#orderSum").innerHTML = `
+    <div class="ordersum__row"><span>Service</span><b>${state.sub ? state.sub.label : cat.label}</b></div>
+    <div class="ordersum__row"><span>Pro</span><b>${state.pro.name}</b></div>
+    <div class="ordersum__row"><span>When</span><b>${state.when}</b></div>
+    <div class="ordersum__row"><span>Area</span><b>${state.location.name}</b></div>
+    <div class="ordersum__row ordersum__row--total"><span>Estimated</span><b>from RM${state.pro.priceFrom}</b></div>`;
+  $("#payList").innerHTML = PAYMETHODS.map(m => `
+    <button class="paymethod ${m.id === state.pay ? "is-on" : ""}" data-pay="${m.id}">
+      <span class="paymethod__ico">${m.emoji}</span>
+      <span class="paymethod__txt"><b>${m.label}</b><span>${m.note}</span></span>
+      <span class="paymethod__radio"></span>
+    </button>`).join("");
+  $("#payList").querySelectorAll(".paymethod").forEach(b =>
+    b.addEventListener("click", () => {
+      state.pay = b.dataset.pay;
+      $("#payList").querySelectorAll(".paymethod").forEach(x => x.classList.toggle("is-on", x === b));
+    }));
+  $("#payTotal").textContent = `from RM${state.pro.priceFrom}`;
+}
+
+// ---------- Done ----------
+function renderDone() {
+  const method = PAYMETHODS.find(m => m.id === state.pay);
+  const cat = catById(state.pro.service);
+  $("#doneMsg").textContent = `${state.pro.name} will WhatsApp you shortly to confirm ${state.when.toLowerCase()}.`;
+  $("#doneSummary").innerHTML = `
+    <div class="ordersum__row"><span>Service</span><b>${state.sub ? state.sub.label : cat.label}</b></div>
+    <div class="ordersum__row"><span>Pro</span><b>${state.pro.name}</b></div>
+    <div class="ordersum__row"><span>When</span><b>${state.when}</b></div>
+    <div class="ordersum__row"><span>Payment</span><b>${method.emoji} ${method.label}</b></div>`;
+}
+
+// ---------- Location modal ----------
+function updateAreaLabels() {
+  $("#locArea").textContent = state.location.name;
+  $("#locArea2").textContent = state.location.name;
+}
+function renderAreaList() {
+  const wrap = $("#areaList");
+  const item = a => `<button class="arealist__item ${a.id === state.location.id ? "is-active" : ""} ${a.live ? "" : "is-soon"}" data-area="${a.id}">
+    <span>${a.name}</span>${a.live ? '<span class="tag-live">Live</span>' : '<span class="tag-soon">Soon</span>'}</button>`;
+  wrap.innerHTML = `<div class="arealist__sep">Live now</div>` + AREAS.filter(a => a.live).map(item).join("") +
+    `<div class="arealist__sep">Coming soon</div>` + AREAS.filter(a => !a.live).map(item).join("");
+  wrap.querySelectorAll(".arealist__item").forEach(el =>
+    el.addEventListener("click", () => {
+      state.location = AREAS.find(a => a.id === el.dataset.area);
+      state.shown = PAGE_SIZE;
+      closeModal("#locModal");
+      updateAreaLabels();
+      if (!$("#scrPros").hidden) renderPros();
+      toast(`📍 Area: ${state.location.name}`);
+    }));
+}
+
+// ---------- For pros view ----------
+function buildProForm() {
+  $("#pfServices").innerHTML = CATEGORIES.map(c =>
+    `<button type="button" class="svcchip" data-svc="${c.id}">${c.emoji} ${c.label}</button>`).join("");
+  $("#pfServices").querySelectorAll(".svcchip").forEach(chip =>
+    chip.addEventListener("click", () => chip.classList.toggle("is-on")));
+  const opt = a => `<option value="${a.id}">${a.name}${a.live ? " (live)" : " (coming soon)"}</option>`;
+  $("#pfArea").innerHTML = AREAS.filter(a => a.live).map(opt).join("") + AREAS.filter(a => !a.live).map(opt).join("");
+}
+function openProView(returnScreen) {
+  state.returnScreen = returnScreen;
+  $("#proFormWrap").hidden = false; $("#proSuccess").hidden = true;
+  showScreen("proView");
 }
 
 // ---------- Modal / toast helpers ----------
 function openModal(sel) { $(sel).hidden = false; document.body.style.overflow = "hidden"; }
 function closeModal(sel) { $(sel).hidden = true; document.body.style.overflow = ""; }
-function closeAllModals() {
-  ["#locModal", "#bookModal", "#profileModal"].forEach(closeModal);
-}
-
 let toastTimer;
 function toast(msg) {
-  const el = $("#toast");
-  el.textContent = msg;
-  el.hidden = false;
+  const el = $("#toast"); el.textContent = msg; el.hidden = false;
   requestAnimationFrame(() => el.classList.add("is-show"));
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    el.classList.remove("is-show");
-    setTimeout(() => (el.hidden = true), 300);
-  }, 2600);
-}
-
-// ---------- For pros view ----------
-function buildProForm() {
-  // service chips
-  const wrap = $("#pfServices");
-  wrap.innerHTML = CATEGORIES.map(c =>
-    `<button type="button" class="svcchip" data-svc="${c.id}">${c.emoji} ${c.label}</button>`).join("");
-  wrap.querySelectorAll(".svcchip").forEach(chip =>
-    chip.addEventListener("click", () => chip.classList.toggle("is-on")));
-  // base area dropdown (live areas first, flagged)
-  const sel = $("#pfArea");
-  const opt = a => `<option value="${a.id}">${a.name}${a.live ? " (live)" : " (coming soon)"}</option>`;
-  sel.innerHTML = AREAS.filter(a => a.live).map(opt).join("") + AREAS.filter(a => !a.live).map(opt).join("");
-}
-
-function showProView(show) {
-  $("#proView").hidden = !show;
-  $(".ribbon").hidden = show;
-  document.querySelector("main.book").hidden = show;
-  $(".foot").hidden = show;
-  // reset to the form (not the success screen) each time it opens
-  if (show) {
-    $("#proFormWrap").hidden = false;
-    $("#proSuccess").hidden = true;
-    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
-  }
+  toastTimer = setTimeout(() => { el.classList.remove("is-show"); setTimeout(() => (el.hidden = true), 300); }, 2600);
 }
 
 // ---------- Init ----------
 function init() {
-  renderServices();
-  renderResults();
+  renderCatGrid();
   buildProForm();
+  renderAreaList();
 
-  $("#proOpen").addEventListener("click", () => showProView(true));
-  $("#proOpen2").addEventListener("click", () => showProView(true));
-  $("#proBack").addEventListener("click", () => showProView(false));
-  $("#proDone").addEventListener("click", () => showProView(false));
-  $("#brandBtn").addEventListener("click", () => showProView(false));
+  // Splash -> login
+  showScreen("scrSplash");
+  const splashGo = () => { if (!$("#scrSplash").hidden) showScreen("scrLogin"); };
+  setTimeout(splashGo, 1500);
+  $("#scrSplash").addEventListener("click", splashGo);
 
+  // Login
+  document.querySelectorAll("[data-auth]").forEach(b =>
+    b.addEventListener("click", () => { state.user = { via: b.dataset.auth }; goHome(); }));
+  $("#guestBtn").addEventListener("click", () => { state.user = { via: "guest" }; goHome(); });
+
+  // Nav / back
+  $("#brandBtn").addEventListener("click", goHome);
+  document.querySelectorAll("[data-back]").forEach(b =>
+    b.addEventListener("click", () => showScreen("scr" + b.dataset.back.charAt(0).toUpperCase() + b.dataset.back.slice(1))));
+
+  // Location
+  $("#locBtn").addEventListener("click", () => { renderAreaList(); openModal("#locModal"); });
+  $("#locBtn2").addEventListener("click", () => { renderAreaList(); openModal("#locModal"); });
+  $("#gpsBtn").addEventListener("click", () => {
+    if (!navigator.geolocation) { toast("GPS isn't supported here 😅"); return; }
+    $("#gpsBtn").textContent = "🛰️ Finding your location…";
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const me = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        state.location = AREAS.map(a => ({ a, d: distanceKm(me, a) })).sort((x, y) => x.d - y.d)[0].a;
+        state.shown = PAGE_SIZE;
+        $("#gpsBtn").innerHTML = "<span>🛰️</span> Use my GPS location";
+        closeModal("#locModal"); updateAreaLabels();
+        if (!$("#scrPros").hidden) renderPros();
+        toast(`📍 Nearest area: ${state.location.name}`);
+      },
+      () => { $("#gpsBtn").innerHTML = "<span>🛰️</span> Use my GPS location"; toast("Couldn't access GPS — pick your area 🙏"); }
+    );
+  });
+
+  // Pros screen
+  $("#showmoreBtn").addEventListener("click", () => { state.shown += PAGE_SIZE; renderPros(); });
+  $("#prosEmptyBtn").addEventListener("click", () => {
+    state.location = AREAS.find(a => a.id === "bukit-rimau"); state.shown = PAGE_SIZE; renderPros();
+  });
+  $("#profileBook").addEventListener("click", () => { if (currentProfileId) startBooking(currentProfileId); });
+
+  // Booking screen
+  $("#whenRow").querySelectorAll(".tchip").forEach(c =>
+    c.addEventListener("click", () => {
+      $("#whenRow").querySelectorAll(".tchip").forEach(x => x.classList.remove("is-on"));
+      c.classList.add("is-on"); state.when = c.dataset.when;
+    }));
+  $("#toPayBtn").addEventListener("click", () => { renderPayment(); showScreen("scrPay"); });
+
+  // Payment screen
+  $("#payBtn").addEventListener("click", () => { renderDone(); showScreen("scrDone"); });
+
+  // Done
+  $("#doneHome").addEventListener("click", () => { state.topCat = state.sub = state.pro = null; goHome(); });
+
+  // For pros
+  $("#proOpenLogin").addEventListener("click", () => openProView("scrLogin"));
+  $("#proOpenHome").addEventListener("click", () => openProView("scrHome"));
+  $("#proBack").addEventListener("click", () => showScreen(state.returnScreen));
+  $("#proDone").addEventListener("click", () => showScreen(state.returnScreen));
   $("#proForm").addEventListener("submit", e => {
     e.preventDefault();
     const chosen = [...document.querySelectorAll("#pfServices .svcchip.is-on")];
     if (chosen.length === 0) { toast("Pick at least one service you offer 🙏"); return; }
     const name = $("#pfName").value.split(" ")[0] || "there";
     const plan = document.querySelector('input[name="plan"]:checked').value;
-    $("#proSuccessMsg").textContent =
-      `Thanks ${name}! We'll WhatsApp you to verify (ID + skills) and get your ${plan} listing live in your kawasan — free for your 3-month pilot period.`;
-    $("#proFormWrap").hidden = true;
-    $("#proSuccess").hidden = false;
+    $("#proSuccessMsg").textContent = `Thanks ${name}! We'll WhatsApp you to verify (ID + skills) and get your ${plan} listing live — free for your 3-month pilot period.`;
+    $("#proFormWrap").hidden = true; $("#proSuccess").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  $("#locBtn").addEventListener("click", () => { renderAreaList(); openModal("#locModal"); });
-
-  $("#gpsBtn").addEventListener("click", () => {
-    if (!navigator.geolocation) { toast("GPS isn't supported in this browser 😅"); return; }
-    $("#gpsBtn").textContent = "🛰️ Finding your location…";
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const me = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        const nearest = AREAS.map(a => ({ a, d: distanceKm(me, a) })).sort((x, y) => x.d - y.d)[0];
-        state.location = nearest.a;
-        state.shown = PAGE_SIZE;
-        $("#gpsBtn").innerHTML = "<span>🛰️</span> Use my GPS location";
-        closeModal("#locModal");
-        renderResults();
-        toast(`📍 Nearest area: ${nearest.a.name}`);
-      },
-      () => {
-        $("#gpsBtn").innerHTML = "<span>🛰️</span> Use my GPS location";
-        toast("Couldn't access GPS. Please pick your area manually 🙏");
-      }
-    );
-  });
-
-  $("#showmoreBtn").addEventListener("click", () => { state.shown += PAGE_SIZE; renderResults(); });
-
-  // Book from the profile → close profile, open booking for the same pro.
-  $("#profileBook").addEventListener("click", () => {
-    closeModal("#profileModal");
-    if (currentProfileId) openBooking(currentProfileId);
-  });
-
-  $("#emptyExpand").addEventListener("click", () => {
-    state.radiusKm = Math.min(20, state.radiusKm + 5);
-    state.shown = PAGE_SIZE;
-    renderResults();
-  });
-
-  $("#bookForm").addEventListener("submit", e => {
-    e.preventDefault();
-    const t = TUKANG.find(x => x.id === e.target.dataset.tukang);
-    closeModal("#bookModal");
-    e.target.reset();
-    toast(`✅ Request sent to ${t.name}! They'll WhatsApp you shortly.`);
-  });
-
-  // Waitlist (out-of-zone areas)
-  $("#waitlistForm").addEventListener("submit", e => {
-    e.preventDefault();
-    const area = state.location.name;
-    e.target.reset();
-    toast(`✅ Thanks! We'll email you when kerjakita launches in ${area}.`);
-  });
-  $("#wlSwitch").addEventListener("click", () => {
-    state.location = AREAS.find(a => a.id === "bukit-rimau");
-    state.shown = PAGE_SIZE;
-    renderResults();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    toast("📍 Area: Bukit Rimau");
-  });
-
+  // Close modals
   document.querySelectorAll("[data-close]").forEach(el =>
-    el.addEventListener("click", () => { closeAllModals(); }));
+    el.addEventListener("click", () => { closeModal("#locModal"); closeModal("#profileModal"); }));
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") closeAllModals();
+    if (e.key === "Escape") { closeModal("#locModal"); closeModal("#profileModal"); }
   });
 }
-
 document.addEventListener("DOMContentLoaded", init);
