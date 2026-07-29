@@ -21,28 +21,49 @@
     </div>
   </header>
 
+  <!-- ============ LAUNCH RIBBON ============ -->
+  <div class="ribbon">🎉 Now live in <b>Bukit Rimau</b> &amp; <b>Kota Kemuning</b> · more areas coming soon</div>
+
   <!-- ============ BOOKING (the landing) ============ -->
   <main class="wrap book">
-    <h1 class="book__title">What needs fixing today?</h1>
-    <p class="book__sub">Pick a service — we'll show pros within <b>5 km</b> of <span id="subArea">Bukit Rimau</span>.</p>
 
-    <div class="services" id="services"><!-- service buttons injected --></div>
+    <!-- In-zone: the normal booking flow -->
+    <section id="liveFlow">
+      <h1 class="book__title">What needs fixing today?</h1>
+      <p class="book__sub">Pick a service — we'll show pros within <b>5 km</b> of <span id="subArea">Bukit Rimau</span>.</p>
 
-    <div class="results__bar">
-      <span class="results__count" id="resultsCount">Pros near you</span>
-    </div>
+      <div class="services" id="services"><!-- service buttons injected --></div>
 
-    <div class="list" id="list"><!-- pro rows injected --></div>
+      <div class="results__bar">
+        <span class="results__count" id="resultsCount">Pros near you</span>
+      </div>
 
-    <div class="showmore" id="showmoreWrap" hidden>
-      <button class="btn btn--soft" id="showmoreBtn">Show more</button>
-    </div>
+      <div class="list" id="list"><!-- pro rows injected --></div>
 
-    <div class="empty" id="empty" hidden>
-      <p class="empty__title">No pros within <span id="emptyRadius">5 km</span></p>
-      <p class="empty__sub">Your area is a bit quiet. Try widening the search.</p>
-      <button class="btn btn--primary" id="emptyExpand">Search within 10 km</button>
-    </div>
+      <div class="showmore" id="showmoreWrap" hidden>
+        <button class="btn btn--soft" id="showmoreBtn">Show more</button>
+      </div>
+
+      <div class="empty" id="empty" hidden>
+        <p class="empty__title">No pros within <span id="emptyRadius">5 km</span></p>
+        <p class="empty__sub">Your area is a bit quiet. Try widening the search.</p>
+        <button class="btn btn--primary" id="emptyExpand">Search within 10 km</button>
+      </div>
+    </section>
+
+    <!-- Out-of-zone: waitlist -->
+    <section id="waitlist" class="waitlist" hidden>
+      <div class="waitlist__card">
+        <div class="waitlist__emoji">🚧</div>
+        <h2 class="waitlist__title">kerjakita isn't in <span id="wlArea">your area</span> yet</h2>
+        <p class="waitlist__sub">We're starting small — fully live in <b>Bukit Rimau</b> &amp; <b>Kota Kemuning</b>. Want us in your area next? Leave your email and you'll be first to know.</p>
+        <form id="waitlistForm" class="waitlist__form">
+          <input type="email" id="wlEmail" placeholder="you@email.com" autocomplete="email" required />
+          <button type="submit" class="btn btn--primary">Notify me</button>
+        </form>
+        <button type="button" class="btn btn--soft waitlist__try" id="wlSwitch">Try it in Bukit Rimau instead</button>
+      </div>
+    </section>
   </main>
 
   <footer class="foot">

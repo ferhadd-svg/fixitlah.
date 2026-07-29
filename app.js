@@ -128,6 +128,13 @@ function renderResults() {
 
   $("#locArea").textContent = state.location.name;
   $("#subArea").textContent = state.location.name;
+  $("#wlArea").textContent = state.location.name;
+
+  // Pilot zone gate: only live areas show the booking flow.
+  const inZone = !!state.location.live;
+  $("#liveFlow").hidden = !inZone;
+  $("#waitlist").hidden = inZone;
+  if (!inZone) return;
 
   if (list.length === 0) {
     listEl.innerHTML = "";
@@ -164,14 +171,18 @@ function renderResults() {
 // ---------- Location modal ----------
 function renderAreaList() {
   const wrap = $("#areaList");
-  wrap.innerHTML = AREAS.map(a => {
+  const item = a => {
     const active = a.id === state.location.id;
-    const d = distanceKm(state.location, a);
-    return `<button class="arealist__item ${active ? "is-active" : ""}" data-area="${a.id}">
+    return `<button class="arealist__item ${active ? "is-active" : ""} ${a.live ? "" : "is-soon"}" data-area="${a.id}">
       <span>${a.name}</span>
-      ${active ? "<small>📍 current</small>" : `<small>${d.toFixed(1)} km</small>`}
+      ${a.live ? '<span class="tag-live">Live</span>' : '<span class="tag-soon">Soon</span>'}
     </button>`;
-  }).join("");
+  };
+  const live = AREAS.filter(a => a.live);
+  const soon = AREAS.filter(a => !a.live);
+  wrap.innerHTML =
+    `<div class="arealist__sep">Live now</div>` + live.map(item).join("") +
+    `<div class="arealist__sep">Coming soon — join the waitlist</div>` + soon.map(item).join("");
   wrap.querySelectorAll(".arealist__item").forEach(item => {
     item.addEventListener("click", () => {
       state.location = AREAS.find(a => a.id === item.dataset.area);
@@ -323,6 +334,21 @@ function init() {
     closeModal("#bookModal");
     e.target.reset();
     toast(`✅ Request sent to ${t.name}! They'll WhatsApp you shortly.`);
+  });
+
+  // Waitlist (out-of-zone areas)
+  $("#waitlistForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const area = state.location.name;
+    e.target.reset();
+    toast(`✅ Thanks! We'll email you when kerjakita launches in ${area}.`);
+  });
+  $("#wlSwitch").addEventListener("click", () => {
+    state.location = AREAS.find(a => a.id === "bukit-rimau");
+    state.shown = PAGE_SIZE;
+    renderResults();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast("📍 Area: Bukit Rimau");
   });
 
   document.querySelectorAll("[data-close]").forEach(el =>

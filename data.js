@@ -24,9 +24,11 @@ const CATEGORIES = [
 ];
 
 // Preset neighbourhoods the customer can pick from, plus GPS.
+// `live: true` = inside the pilot zone. Everything else is "coming soon"
+// and routes visitors to the waitlist.
 const AREAS = [
-  { id: "bukit-rimau",   name: "Bukit Rimau",          lat: 3.0247, lng: 101.5327 },
-  { id: "kota-kemuning", name: "Kota Kemuning",        lat: 3.0208, lng: 101.5378 },
+  { id: "bukit-rimau",   name: "Bukit Rimau",          lat: 3.0247, lng: 101.5327, live: true },
+  { id: "kota-kemuning", name: "Kota Kemuning",        lat: 3.0208, lng: 101.5378, live: true },
   { id: "shah-alam",     name: "Shah Alam (Seksyen 13)",lat: 3.0700, lng: 101.5180 },
   { id: "klang",         name: "Klang Bandar",         lat: 3.0449, lng: 101.4455 },
   { id: "bukit-tinggi",  name: "Bukit Tinggi, Klang",  lat: 3.0330, lng: 101.4630 },
