@@ -97,9 +97,24 @@ body {
 .book__sub { margin-top: 12px; font-size: 18px; color: var(--forest-soft); }
 .book__sub b { color: var(--forest); }
 
+/* trust line (customer reassurance) */
+.trustline {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 14px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+}
+
 /* service picker */
 .services {
-  display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 10px;
+  display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 10px;
+}
+/* On phones, swipe the services sideways so pros/booking sit higher */
+@media (max-width: 560px) {
+  .services {
+    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+    margin: 20px -20px 10px; padding: 0 20px 4px;
+  }
+  .services::-webkit-scrollbar { display: none; }
+  .svc { flex: 0 0 auto; }
 }
 .svc {
   display: inline-flex; align-items: center; gap: 8px; font-family: inherit;
@@ -152,10 +167,10 @@ body {
 /* ---------- Top bar right group + pro link ---------- */
 .topbar__right { display: flex; align-items: center; gap: 10px; }
 .prolink {
-  font-family: inherit; font-size: 14px; font-weight: 700; color: var(--forest);
+  font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--muted);
   background: none; border: none; cursor: pointer; padding: 8px 6px; white-space: nowrap;
 }
-.prolink:hover { text-decoration: underline; }
+.prolink:hover { color: var(--forest); text-decoration: underline; }
 @media (max-width: 520px) { .prolink { display: none; } } /* keep header clean on mobile; footer link covers it */
 
 /* ---------- For pros view ---------- */
