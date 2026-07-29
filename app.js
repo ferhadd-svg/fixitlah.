@@ -286,10 +286,57 @@ function toast(msg) {
   }, 2600);
 }
 
+// ---------- For pros view ----------
+function buildProForm() {
+  // service chips
+  const wrap = $("#pfServices");
+  wrap.innerHTML = CATEGORIES.map(c =>
+    `<button type="button" class="svcchip" data-svc="${c.id}">${c.emoji} ${c.label}</button>`).join("");
+  wrap.querySelectorAll(".svcchip").forEach(chip =>
+    chip.addEventListener("click", () => chip.classList.toggle("is-on")));
+  // base area dropdown (live areas first, flagged)
+  const sel = $("#pfArea");
+  const opt = a => `<option value="${a.id}">${a.name}${a.live ? " (live)" : " (coming soon)"}</option>`;
+  sel.innerHTML = AREAS.filter(a => a.live).map(opt).join("") + AREAS.filter(a => !a.live).map(opt).join("");
+}
+
+function showProView(show) {
+  $("#proView").hidden = !show;
+  $(".ribbon").hidden = show;
+  document.querySelector("main.book").hidden = show;
+  $(".foot").hidden = show;
+  // reset to the form (not the success screen) each time it opens
+  if (show) {
+    $("#proFormWrap").hidden = false;
+    $("#proSuccess").hidden = true;
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  }
+}
+
 // ---------- Init ----------
 function init() {
   renderServices();
   renderResults();
+  buildProForm();
+
+  $("#proOpen").addEventListener("click", () => showProView(true));
+  $("#proOpen2").addEventListener("click", () => showProView(true));
+  $("#proBack").addEventListener("click", () => showProView(false));
+  $("#proDone").addEventListener("click", () => showProView(false));
+  $("#brandBtn").addEventListener("click", () => showProView(false));
+
+  $("#proForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const chosen = [...document.querySelectorAll("#pfServices .svcchip.is-on")];
+    if (chosen.length === 0) { toast("Pick at least one service you offer 🙏"); return; }
+    const name = $("#pfName").value.split(" ")[0] || "there";
+    const plan = document.querySelector('input[name="plan"]:checked').value;
+    $("#proSuccessMsg").textContent =
+      `Thanks ${name}! We'll WhatsApp you to verify (ID + skills) and get your ${plan} listing live in your kawasan — free for your 3-month pilot period.`;
+    $("#proFormWrap").hidden = true;
+    $("#proSuccess").hidden = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 
   $("#locBtn").addEventListener("click", () => { renderAreaList(); openModal("#locModal"); });
 

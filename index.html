@@ -12,12 +12,15 @@
   <!-- ============ TOP BAR ============ -->
   <header class="topbar">
     <div class="wrap topbar__inner">
-      <span class="brand">kerjakita</span>
-      <button class="locpill" id="locBtn" aria-haspopup="dialog">
-        <span class="locpill__ico">📍</span>
-        <span class="locpill__area" id="locArea">Bukit Rimau</span>
-        <span class="locpill__chev">▾</span>
-      </button>
+      <button class="brand" id="brandBtn">kerjakita</button>
+      <div class="topbar__right">
+        <button class="prolink" id="proOpen">List your business</button>
+        <button class="locpill" id="locBtn" aria-haspopup="dialog">
+          <span class="locpill__ico">📍</span>
+          <span class="locpill__area" id="locArea">Bukit Rimau</span>
+          <span class="locpill__chev">▾</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -66,10 +69,104 @@
     </section>
   </main>
 
+  <!-- ============ FOR PROS (registration) ============ -->
+  <section id="proView" class="prov" hidden>
+    <div class="wrap">
+      <button class="prov__back" id="proBack">← Back to app</button>
+
+      <div class="prov__hero">
+        <span class="prov__eyebrow">For freelancers &amp; small businesses</span>
+        <h1 class="prov__title">Grow your business in your kawasan.</h1>
+        <p class="prov__sub">Turn your skill — cleaning, plumbing, car detailing, whatever you're good at — into steady local jobs on a platform people actually trust. Get found by neighbours within 5&nbsp;km, not the whole city.</p>
+      </div>
+
+      <div class="prov__benefits">
+        <div class="benefit"><div class="benefit__ico">📍</div><h3>Get found nearby</h3><p>Customers within 5 km of your base see you first — less driving, more jobs.</p></div>
+        <div class="benefit"><div class="benefit__ico">⭐</div><h3>Build a reputation</h3><p>Ratings &amp; reviews that bring repeat work. Your record stays with you.</p></div>
+        <div class="benefit"><div class="benefit__ico">🛡️</div><h3>Get paid safely</h3><p>In-app payment protection — money's secured before you start. No chasing cash.</p></div>
+        <div class="benefit"><div class="benefit__ico">📈</div><h3>A real storefront</h3><p>More than a WhatsApp contact — a proper profile that grows your business.</p></div>
+      </div>
+
+      <div class="steps">
+        <div class="step"><b>1</b> Register &amp; pick a plan</div>
+        <div class="step"><b>2</b> Get verified (ID + skills)</div>
+        <div class="step"><b>3</b> Start getting jobs</div>
+      </div>
+
+      <div id="proFormWrap">
+        <h2 class="prov__h2">Choose a listing plan</h2>
+        <div class="pilotnote">🎉 <b>Free for 3 months</b> for the first pilot pros in Bukit Rimau &amp; Kota Kemuning.</div>
+
+        <form id="proForm" class="proform">
+          <div class="plans">
+            <label class="plan">
+              <input type="radio" name="plan" value="Basic" checked />
+              <div class="plan__body">
+                <div class="plan__name">Basic</div>
+                <div class="plan__price"><b>RM19</b><span>/month</span></div>
+                <ul>
+                  <li>Listed in your kawasan</li>
+                  <li>Profile with reviews</li>
+                  <li>Up to 3 services</li>
+                  <li>Booking requests</li>
+                </ul>
+              </div>
+            </label>
+            <label class="plan">
+              <input type="radio" name="plan" value="Pro" />
+              <span class="plan__tag">Most popular</span>
+              <div class="plan__body">
+                <div class="plan__name">Pro</div>
+                <div class="plan__price"><b>RM49</b><span>/month</span></div>
+                <ul>
+                  <li>Everything in Basic</li>
+                  <li><b>Featured</b> — top of results</li>
+                  <li>Unlimited services</li>
+                  <li>Verified Pro badge</li>
+                  <li>Priority support</li>
+                </ul>
+              </div>
+            </label>
+          </div>
+
+          <h2 class="prov__h2">Your details</h2>
+          <div class="proform__grid">
+            <label class="fld">Full name<input type="text" id="pfName" required placeholder="e.g. Ahmad Faizal" /></label>
+            <label class="fld">Business name <span class="opt">(optional)</span><input type="text" id="pfBiz" placeholder="e.g. AF Aircond Services" /></label>
+            <label class="fld fld--full">What do you offer? <span class="opt">(pick all that apply)</span>
+              <div class="svcpick" id="pfServices"><!-- chips injected --></div>
+            </label>
+            <label class="fld">Base area<select id="pfArea"><!-- areas injected --></select></label>
+            <label class="fld">Service radius
+              <select id="pfRadius"><option>5 km</option><option>10 km</option><option>15 km</option></select>
+            </label>
+            <label class="fld">WhatsApp number<input type="tel" id="pfPhone" required placeholder="e.g. 012-345 6789" /></label>
+            <label class="fld">Email<input type="email" id="pfEmail" required placeholder="you@email.com" /></label>
+            <label class="fld">Years of experience<input type="number" id="pfYears" min="0" placeholder="e.g. 8" /></label>
+            <label class="fld">Starting price (RM)<input type="number" id="pfPrice" min="0" placeholder="e.g. 80" /></label>
+            <label class="fld fld--full">Short bio<textarea id="pfBio" rows="3" placeholder="Tell customers what you do best."></textarea></label>
+          </div>
+
+          <label class="agree"><input type="checkbox" id="pfAgree" required /> I agree to verification (ID &amp; skills) and the kerjakita pro terms.</label>
+          <button type="submit" class="btn btn--primary btn--block">Submit application</button>
+          <p class="proform__fine">No charge today — we'll verify you first, then you pick up from your free pilot period. (Demo — nothing is submitted.)</p>
+        </form>
+      </div>
+
+      <div id="proSuccess" class="prosuccess" hidden>
+        <div class="prosuccess__emoji">🎉</div>
+        <h2>Application received!</h2>
+        <p id="proSuccessMsg">Thanks — we'll WhatsApp you to verify and get your profile live in your kawasan.</p>
+        <button class="btn btn--soft" id="proDone">Back to app</button>
+      </div>
+    </div>
+  </section>
+
   <footer class="foot">
     <div class="wrap">
       <span class="foot__brand">kerjakita</span>
       <span class="foot__note">Trusted pros near you, within 5 km. Prototype demo — sample pros & prices only. 🇲🇾</span>
+      <button class="foot__prolink" id="proOpen2">Are you a pro? List your business →</button>
     </div>
   </footer>
 
