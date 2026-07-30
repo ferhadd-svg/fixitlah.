@@ -125,13 +125,13 @@ a pro can read bookings assigned to them; admin role bypasses for moderation.
 
 ## 8. Build order (milestones)
 
-| # | Milestone | Delivers |
-|---|-----------|----------|
-| **M1** | Foundation | Supabase project + schema + RLS; seed categories/areas; Next.js app scaffold with the ported UI; deploy skeleton. |
-| **M2** | Customer read path | Pros list + profiles from the DB; 5 km PostGIS search; category filter. **No auth needed** — the browse experience is real first. |
-| **M3** | Auth + booking | Phone-OTP login at the booking step; create + track bookings; pro receives the request. |
-| **M4** | Pro side | Registration → pending; admin verify; pro dashboard (services, requests, accept/complete); listing-plan checkout (waived in pilot). |
-| **M5** | Reviews, comms, polish | Post-job reviews; email/WhatsApp notifications; analytics; PWA manifest + install. **Pilot launch.** |
+| # | Milestone | Delivers | Status |
+|---|-----------|----------|--------|
+| **M1** | Foundation | Postgres schema + PostGIS matching function + RLS (`supabase/migrations/`); Next.js app scaffold with the full customer flow ported (`webapp/`), running standalone in demo mode. | ✅ Done |
+| **M2** | Customer read path | Pros list + profiles from the DB; 5 km PostGIS search (`nearby_pros` RPC); category/taxonomy browsing. **No auth needed.** | 🟡 Wired, needs a real Supabase project connected to prove it end-to-end with live data |
+| **M3** | Auth + booking | Google/Apple/email/guest sign-in via Supabase Auth; bookings insert to the DB. | 🟡 Code in place (`lib/db.js`); needs OAuth providers configured in the Supabase dashboard |
+| **M4** | Pro side | Registration → pending; admin verify; pro dashboard (services, requests, accept/complete); listing-plan checkout (waived in pilot). | ⬜ Not started — static site's registration form still needs porting + admin verification screen |
+| **M5** | Reviews, comms, polish | Post-job reviews; email/WhatsApp notifications; analytics; PWA manifest + install. **Pilot launch.** | ⬜ Not started |
 
 Customer value lands early (M2–M3) before the pro/admin machinery (M4).
 

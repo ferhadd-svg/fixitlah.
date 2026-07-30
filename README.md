@@ -2,94 +2,92 @@
 
 **Trusted pros near you, within 5 km.**
 
-A Malaysian on-demand services marketplace — from aircond servicing and paip
-bocor to mekanik kereta — that only matches customers with tukang (handymen /
-tradespeople) **within a small radius of their kawasan** (default **5 km**).
-Small radius = faster response, support local, and less cut-throat competition
-for the tukang.
+A Malaysian on-demand services marketplace — aircon, plumbing, electrical,
+car services, construction, and more — that only matches customers with pros
+**within a small radius of their kawasan** (default **5 km**). Small radius =
+faster response, support local, and less cut-throat competition for the pro.
 
-The landing page **is** the booking page: pick a service, see the tukang within
-5 km of your area, tap **Book**. No marketing detour. The look is deliberately
-clean and bright (Wise-inspired): forest green + lime, lots of whitespace.
+Piloting in **Bukit Rimau & Kota Kemuning**.
 
-This repo currently holds a **clickable front-end prototype** (no backend yet).
-Everything runs in the browser on mock data so you can see and feel the concept.
+This repo currently holds two things side by side:
+
+| | What it is | Status |
+|---|---|---|
+| **Root files** (`index.html`, `app.js`, …) | The original clickable front-end prototype — splash → login → categories → booking → payment, all on mock data | Demo only, nothing persists |
+| **`webapp/`** | The real Phase 1 build — Next.js + Supabase | Runs standalone; connect a Supabase project to make it persist (see `webapp/README.md`) |
 
 > Note: the folder / git repo is still named `fixitlah` (the original name);
 > the product is now branded **kerjakita**.
 
 ---
 
-## Run it
+## Run the prototype (root files)
 
-No build step, no install. Just open the file:
+No build step, no install:
 
 ```bash
-# from the repo folder
 open index.html            # macOS
 xdg-open index.html        # Linux
 # or just double-click index.html
 ```
 
-Or serve it locally (nicer for GPS testing, which needs a secure/localhost origin):
+## Run the real webapp
 
 ```bash
-python3 -m http.server 8000
-# then visit http://localhost:8000
+cd webapp
+npm install
+npm run dev
 ```
+
+Works out of the box in **demo mode** (bundled sample data). See
+`webapp/README.md` to connect a real Supabase project so bookings, pro
+signups, and the waitlist actually persist.
 
 ---
 
-## What works in the prototype
+## The customer flow (both versions)
 
-- **🛎️ Booking-first landing** — the first screen is the booking flow: choose a
-  service, the matching tukang appear immediately below.
-- **📍 Kawasan-based matching** — pick your area (Bukit Rimau, Kota Kemuning,
-  Klang, Shah Alam, …) or tap **Guna GPS saya**. The app snaps you to the
-  nearest known area.
-- **🎯 Real 5 km radius filter** — distances are computed with the Haversine
-  formula. Only tukang inside 5 km are shown, sorted nearest-first. If none are
-  in range, one tap widens the search.
-- **🧰 14 service categories** — aircond, paip, wireman, mekanik, motor,
-  cleaning, potong rumput, pest control, reno, cat, appliance repair, tukang
-  kunci, CCTV, pasang perabot.
-- **📩 Booking flow (mock)** — pick a time, describe the problem, send request.
+Splash → **Login** (Google / Apple / email / continue as guest) → **Home**
+(short top-level categories: Aircon, Plumbing, Car, Construction, …) → tap a
+category → **detailed sub-services** (e.g. Car → tyres, detailing, audio,
+battery) → **nearby pros** within 5 km, real distance matching → **Book**
+(when + describe the problem) → **Payment** (Apple Pay, Google Pay, Touch 'n
+Go, DuitNow QR, FPX, card) → confirmed.
 
-Everything is styled mobile-first, so it looks right on a phone.
+Customer-first throughout: browsing never requires an account; the pro
+registration ("List your business") and pilot-zone waitlist stay visually
+secondary to the customer's path to booking.
 
 ---
 
 ## Project structure
 
-| File | What it does |
-|------|--------------|
-| `index.html` | Page structure & sections |
-| `styles.css` | All styling (tropical + warm Malaysian palette) |
-| `data.js`    | Mock seed data: service categories, areas, tukang (with lat/lng) |
-| `app.js`     | State, Haversine distance, radius matching, rendering, modals |
-
-The matching logic lives in `app.js` → `distanceKm()` and `matchedTukang()`.
-
----
-
-## Roadmap (from prototype → real product)
-
-**Next up**
-- [ ] Real backend + database (customers, tukang, bookings that persist)
-- [ ] Auth: separate customer & tukang signup / login
-- [ ] Tukang onboarding: set base location + service radius, upload SSM / IC
-      for verification
-- [ ] Live geocoding (address → lat/lng) instead of preset areas
-- [ ] Actual WhatsApp / in-app messaging between customer and tukang
-
-**Later**
-- [ ] In-app payment + escrow (release after job done), FPX / e-wallet (GrabPay,
-      TnG, Boost)
-- [ ] Ratings & reviews written by real customers
-- [ ] Push notifications for new nearby jobs (tukang side)
-- [ ] Admin dashboard + dispute handling
-- [ ] PWA / wrap into an installable mobile app
+```
+index.html, styles.css, data.js, app.js   the static prototype (root)
+fonts/                                    self-hosted Plus Jakarta Sans
+docs/PHASE-1-SCOPE.md                     Phase 1 scope: stack, milestones, decisions
+supabase/migrations/                      real Postgres schema + seed data (PostGIS matching, RLS)
+webapp/                                   Next.js app — the real Phase 1 build
+  app/page.js                               the whole customer flow (client component)
+  lib/db.js                                 data access — Supabase first, demo-data fallback
+  lib/demoData.js                           bundled sample content for demo mode
+```
 
 ---
 
-*Prototype demo — all tukang, prices and reviews are sample data. Made in Malaysia 🇲🇾*
+## Roadmap
+
+**Phase 1 (in progress)** — real backend + auth + persistence. See
+`docs/PHASE-1-SCOPE.md` for the full milestone breakdown (M1–M5).
+
+**Phase 2** — real escrow/payments, in-app chat + masked contact, reviews from
+real completed jobs, notifications, scheduling.
+
+**Phase 3** — recurring subscriptions, kerjakita+ membership, referrals, pro
+dashboard, installable PWA.
+
+**Phase 4** — new verticals, B2B, expansion beyond the pilot zone.
+
+---
+
+*Prototype/demo content — sample pros, prices and reviews unless connected to a real Supabase project. Made in Malaysia 🇲🇾*
