@@ -46,6 +46,10 @@ export function categoryLabel(categoryId) {
   return DEMO_CATEGORIES[categoryId] || { label: categoryId, emoji: "🔧" };
 }
 
+export function allCategories() {
+  return Object.entries(DEMO_CATEGORIES).map(([id, c]) => ({ id, ...c }));
+}
+
 export async function joinWaitlist(email, area) {
   if (!isSupabaseConfigured) return { ok: true, demo: true };
   const { error } = await supabase.from("waitlist").insert({ email, area });
@@ -63,6 +67,39 @@ export async function createBooking({ proId, categoryId, whenPref, note, payment
     when_pref: whenPref, note, payment_method: paymentMethod,
   }).select().single();
   return { ok: !error, booking: data, error };
+}
+
+// Pro registration: creates the profile (role=pro), a pending pros row,
+// and one pro_services row per selected category. Caller must already be
+// signed in (see the auth helpers below) — RLS only allows a user to
+// insert rows tied to their own auth.uid().
+export async function createProListing({
+  fullName, businessName, bio, categoryIds, baseAreaId, baseLat, baseLng,
+  radiusKm, phone, email, yearsExp, priceFrom, plan,
+}) {
+  if (!isSupabaseConfigured) return { ok: true, demo: true };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "not_signed_in" };
+
+  const { error: profErr } = await supabase.from("profiles").upsert({
+    id: user.id, role: "pro", full_name: fullName, phone, email,
+  });
+  if (profErr) return { ok: false, error: profErr };
+
+  const { error: proErr } = await supabase.from("pros").upsert({
+    user_id: user.id, business_name: businessName || fullName, bio,
+    base_area_id: baseAreaId, base_lat: baseLat, base_lng: baseLng,
+    radius_km: radiusKm, years_exp: yearsExp, plan, status: "pending",
+  });
+  if (proErr) return { ok: false, error: proErr };
+
+  const rows = categoryIds.map((categoryId) => ({
+    pro_id: user.id, category_id: categoryId, price_from: priceFrom,
+  }));
+  const { error: svcErr } = await supabase.from("pro_services").upsert(rows, { onConflict: "pro_id,category_id" });
+  if (svcErr) return { ok: false, error: svcErr };
+
+  return { ok: true };
 }
 
 // ---------- Auth ----------

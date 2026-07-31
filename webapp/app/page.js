@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import {
-  getTopcats, getAreas, getNearbyPros, categoryLabel, joinWaitlist,
-  createBooking, signInWithGoogle, signInWithApple, signInWithEmail, signInAsGuest,
+  getTopcats, getAreas, getNearbyPros, categoryLabel, allCategories, joinWaitlist,
+  createBooking, createProListing, signInWithGoogle, signInWithApple, signInWithEmail, signInAsGuest,
 } from "@/lib/db";
 import { DEMO_PAYMETHODS } from "@/lib/demoData";
 
@@ -26,6 +26,23 @@ export default function Home() {
   const [payMethod, setPayMethod] = useState(PAYMETHODS[0].id);
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [toastMsg, setToastMsg] = useState("");
+  const [returnScreen, setReturnScreen] = useState("home");
+
+  // Pro registration form state.
+  const [pfPlan, setPfPlan] = useState("basic");
+  const [pfName, setPfName] = useState("");
+  const [pfBiz, setPfBiz] = useState("");
+  const [pfCats, setPfCats] = useState(new Set());
+  const [pfArea, setPfArea] = useState("");
+  const [pfRadius, setPfRadius] = useState(5);
+  const [pfPhone, setPfPhone] = useState("");
+  const [pfEmail, setPfEmail] = useState("");
+  const [pfYears, setPfYears] = useState("");
+  const [pfPrice, setPfPrice] = useState("");
+  const [pfBio, setPfBio] = useState("");
+  const [pfAgree, setPfAgree] = useState(false);
+  const [pfSubmitting, setPfSubmitting] = useState(false);
+  const [pfError, setPfError] = useState("");
 
   // Initial data load.
   useEffect(() => {
@@ -33,6 +50,7 @@ export default function Home() {
       const [a, t] = await Promise.all([getAreas(), getTopcats()]);
       setAreas(a);
       setArea(a.find((x) => x.live) || a[0]);
+      setPfArea((a.find((x) => x.live) || a[0])?.id || "");
       setTopcats(t);
     })();
   }, []);
@@ -93,7 +111,41 @@ export default function Home() {
     toast(`Thanks! We'll email you when kerjakita launches in ${area?.name}.`);
   }
 
+  function openProRegister(from) {
+    setReturnScreen(from);
+    setScreen("proRegister");
+  }
+
+  function toggleCat(id) {
+    setPfCats((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  async function submitProForm(e) {
+    e.preventDefault();
+    setPfError("");
+    if (pfCats.size === 0) { setPfError("Pick at least one service you offer."); return; }
+    if (!user) { await signInAsGuest(); setUser({ via: "guest" }); } // ensure a signed-in uid exists before writing rows
+    setPfSubmitting(true);
+    const chosenArea = areas.find((a) => a.id === pfArea);
+    const res = await createProListing({
+      fullName: pfName, businessName: pfBiz, bio: pfBio,
+      categoryIds: [...pfCats], baseAreaId: pfArea,
+      baseLat: chosenArea?.lat, baseLng: chosenArea?.lng,
+      radiusKm: pfRadius, phone: pfPhone, email: pfEmail,
+      yearsExp: pfYears ? Number(pfYears) : null,
+      priceFrom: pfPrice ? Number(pfPrice) : 0, plan: pfPlan,
+    });
+    setPfSubmitting(false);
+    if (!res.ok && !res.demo) { setPfError("Something went wrong — please try again."); return; }
+    setScreen("proSuccess");
+  }
+
   const cat = sub ? categoryLabel(sub.category_id) : null;
+  const allCats = allCategories();
 
   return (
     <>
@@ -130,6 +182,7 @@ export default function Home() {
             </div>
             <button className="login__guest" onClick={() => handleAuth("guest")}>Continue as guest →</button>
             <p className="login__terms">By continuing you agree to our Terms &amp; Privacy Policy.</p>
+            <button className="login__pro" onClick={() => openProRegister("login")}>Are you a pro? List your business</button>
           </div>
         </section>
       )}
@@ -154,6 +207,7 @@ export default function Home() {
                   </button>
                 ))}
               </div>
+              <button className="home__pro" onClick={() => openProRegister("home")}>Are you a pro? List your business →</button>
             </div>
           ) : (
             <section className="waitlist">
@@ -328,6 +382,106 @@ export default function Home() {
             <button className="btn btn--primary btn--block" onClick={() => { setPro(null); setSub(null); setTopCat(null); setScreen("home"); }}>
               Back to home
             </button>
+          </div>
+        </section>
+      )}
+
+      {screen === "proRegister" && (
+        <section className="screen prov">
+          <div className="wrap">
+            <button className="prov__back" onClick={() => setScreen(returnScreen)}>← Back</button>
+            <div className="prov__hero">
+              <span className="prov__eyebrow">For freelancers &amp; small businesses</span>
+              <h1 className="prov__title">Grow your business in your kawasan.</h1>
+              <p className="prov__sub">Turn your skill — cleaning, plumbing, car detailing, whatever you&apos;re good at — into steady local jobs on a platform people trust. Get found by neighbours within 5&nbsp;km, not the whole city.</p>
+            </div>
+            <div className="prov__benefits">
+              <div className="benefit"><div className="benefit__ico">📍</div><h3>Get found nearby</h3><p>Customers within 5 km of your base see you first.</p></div>
+              <div className="benefit"><div className="benefit__ico">⭐</div><h3>Build a reputation</h3><p>Ratings &amp; reviews that bring repeat work.</p></div>
+              <div className="benefit"><div className="benefit__ico">🛡️</div><h3>Get paid safely</h3><p>Payment protection — money&apos;s secured before you start.</p></div>
+              <div className="benefit"><div className="benefit__ico">📈</div><h3>A real storefront</h3><p>More than a WhatsApp contact — a proper profile.</p></div>
+            </div>
+            <div className="steps">
+              <div className="step"><b>1</b> Register &amp; pick a plan</div>
+              <div className="step"><b>2</b> Get verified (ID + skills)</div>
+              <div className="step"><b>3</b> Start getting jobs</div>
+            </div>
+
+            <h2 className="prov__h2">Choose a listing plan</h2>
+            <div className="pilotnote">🎉 <b>Free for 3 months</b> for the first pilot pros in Bukit Rimau &amp; Kota Kemuning.</div>
+
+            <form className="proform" onSubmit={submitProForm}>
+              <div className="plans">
+                <label className="plan">
+                  <input type="radio" name="plan" checked={pfPlan === "basic"} onChange={() => setPfPlan("basic")} />
+                  <div className="plan__body">
+                    <div className="plan__name">Basic</div>
+                    <div className="plan__price"><b>RM19</b><span>/month</span></div>
+                    <ul><li>Listed in your kawasan</li><li>Profile with reviews</li><li>Up to 3 services</li><li>Booking requests</li></ul>
+                  </div>
+                </label>
+                <label className="plan">
+                  <input type="radio" name="plan" checked={pfPlan === "pro"} onChange={() => setPfPlan("pro")} />
+                  <span className="plan__tag">Most popular</span>
+                  <div className="plan__body">
+                    <div className="plan__name">Pro</div>
+                    <div className="plan__price"><b>RM49</b><span>/month</span></div>
+                    <ul><li>Everything in Basic</li><li><b>Featured</b> — top of results</li><li>Unlimited services</li><li>Verified Pro badge</li></ul>
+                  </div>
+                </label>
+              </div>
+
+              <h2 className="prov__h2">Your details</h2>
+              <div className="proform__grid">
+                <label className="fld">Full name<input required value={pfName} onChange={(e) => setPfName(e.target.value)} placeholder="e.g. Ahmad Faizal" /></label>
+                <label className="fld">Business name <span className="opt">(optional)</span><input value={pfBiz} onChange={(e) => setPfBiz(e.target.value)} placeholder="e.g. AF Aircond Services" /></label>
+                <label className="fld fld--full">What do you offer? <span className="opt">(pick all that apply)</span>
+                  <div className="svcpick">
+                    {allCats.map((c) => (
+                      <button type="button" key={c.id} className={`svcchip ${pfCats.has(c.id) ? "is-on" : ""}`} onClick={() => toggleCat(c.id)}>
+                        {c.emoji} {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </label>
+                <label className="fld">Base area
+                  <select value={pfArea} onChange={(e) => setPfArea(e.target.value)}>
+                    {areas.map((a) => <option key={a.id} value={a.id}>{a.name}{a.live ? " (live)" : " (coming soon)"}</option>)}
+                  </select>
+                </label>
+                <label className="fld">Service radius
+                  <select value={pfRadius} onChange={(e) => setPfRadius(Number(e.target.value))}>
+                    <option value={5}>5 km</option><option value={10}>10 km</option><option value={15}>15 km</option>
+                  </select>
+                </label>
+                <label className="fld">WhatsApp number<input required type="tel" value={pfPhone} onChange={(e) => setPfPhone(e.target.value)} placeholder="e.g. 012-345 6789" /></label>
+                <label className="fld">Email<input required type="email" value={pfEmail} onChange={(e) => setPfEmail(e.target.value)} placeholder="you@email.com" /></label>
+                <label className="fld">Years of experience<input type="number" min="0" value={pfYears} onChange={(e) => setPfYears(e.target.value)} placeholder="e.g. 8" /></label>
+                <label className="fld">Starting price (RM)<input type="number" min="0" value={pfPrice} onChange={(e) => setPfPrice(e.target.value)} placeholder="e.g. 80" /></label>
+                <label className="fld fld--full">Short bio<textarea rows={3} value={pfBio} onChange={(e) => setPfBio(e.target.value)} placeholder="Tell customers what you do best." /></label>
+              </div>
+
+              <label className="agree">
+                <input type="checkbox" required checked={pfAgree} onChange={(e) => setPfAgree(e.target.checked)} />
+                I agree to verification (ID &amp; skills) and the kerjakita pro terms.
+              </label>
+              {pfError && <p className="proform__fine" style={{ color: "#b3261e" }}>{pfError}</p>}
+              <button type="submit" className="btn btn--primary btn--block" disabled={pfSubmitting}>
+                {pfSubmitting ? "Submitting…" : "Submit application"}
+              </button>
+              <p className="proform__fine">No charge today — we verify you first.</p>
+            </form>
+          </div>
+        </section>
+      )}
+
+      {screen === "proSuccess" && (
+        <section className="screen prov">
+          <div className="wrap prosuccess">
+            <div className="prosuccess__emoji">🎉</div>
+            <h2>Application received!</h2>
+            <p>Thanks{pfName ? `, ${pfName.split(" ")[0]}` : ""}! We&apos;ll WhatsApp you to verify (ID + skills) and get your {pfPlan === "pro" ? "Pro" : "Basic"} listing live — free for your 3-month pilot period.</p>
+            <button className="btn btn--soft" onClick={() => setScreen(returnScreen)}>Back</button>
           </div>
         </section>
       )}
